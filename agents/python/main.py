@@ -21,13 +21,13 @@ add_langgraph_fastapi_endpoint(
     ),
     path="/copilotkit/agents/research_agent",
 )
-# add_langgraph_fastapi_endpoint(
-#     app=app,
-#     agent=LangGraphAGUIAgent(
-#         name="research_agent_google_genai", description="Research agent.", graph=graph
-#     ),
-#     path="/copilotkit/agents/research_agent_google_genai",
-# )
+add_langgraph_fastapi_endpoint(
+    app=app,
+    agent=LangGraphAGUIAgent(
+        name="research_agent_google_genai", description="Research agent.", graph=graph
+    ),
+    path="/copilotkit/agents/research_agent_google_genai",
+)
 
 
 @app.get("/health")
