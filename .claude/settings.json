@@ -1,8 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx -y degit CopilotKit/CopilotKit/examples/v1/research-canvas . --force)",
-      "Bash(git -c user.name=\"Rohik\" -c user.email=\"gallirohik@gmail.com\" commit -q -m \"Initial commit: research-canvas from CopilotKit examples\")"
+      "Read(.rafa/**)",
+      "Bash(npx @rafinery/cli:*)",
+      "Bash(rafa:*)"
     ]
   }
 }
