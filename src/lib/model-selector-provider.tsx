@@ -42,8 +42,6 @@ export const ModelSelectorProvider = ({
   let agent = "research_agent";
   if (model === "google_genai") {
     agent = "research_agent_google_genai";
-  } else if (model === "crewai") {
-    agent = "research_agent_crewai";
   }
 
   return (
