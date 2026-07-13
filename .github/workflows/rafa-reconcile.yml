@@ -48,12 +48,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install the Agent SDK (runs on the org's own key)
-        run: npm i --no-save @anthropic-ai/claude-agent-sdk
+      # ISOLATED install — never `npm i` inside the client checkout: a pnpm
+      # workspace repo has "workspace:*" deps npm cannot parse (EUNSUPPORTEDPROTOCOL).
+      - name: Install the Agent SDK (isolated dir; runs on the org's own key)
+        run: |
+          mkdir -p "$RUNNER_TEMP/rafa-sdk" && cd "$RUNNER_TEMP/rafa-sdk"
+          npm init -y > /dev/null
+          npm i @anthropic-ai/claude-agent-sdk
       - name: Distill into the org brain (prism-validated, compile-gated)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           RAFA_MCP_KEY: ${{ secrets.RAFA_MCP_KEY }}
           RAFA_BRAIN_TOKEN: ${{ secrets.RAFA_BRAIN_TOKEN }}
+          RAFA_AGENT_SDK_DIR: ${{ runner.temp }}/rafa-sdk
           RAFA_HOOKS_DISABLED: "1" # headless — the M5 sensors are session instruments
         run: npx -y @rafinery/cli distill --headless "${{ github.event.pull_request.head.ref }}"
