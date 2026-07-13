@@ -37,9 +37,17 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
 1. **Staleness check** — compare the platform envelope's `brainForSha` against the
    local brain stamp; if the platform is behind, surface "run `rafa push`" (never
    proceed silently on knowledge you know is stale — never block either).
-2. **Recall** (atlas, via MCP) → **decompose** ADR-style: decision + rationale +
-   alternatives + risk surface + non-goals; tasks bound to domains with a
-   `## Done-check` each.
+2. **Recall** (atlas, via MCP) → **decompose** into the WORK-ITEM TREE (contract
+   §7 v2): one epic → tasks → subtasks (three ranks, never deeper). Every item
+   carries the glimpse fields — `title` (what) · `description` (why) ·
+   `approach` (how, one line) · `assignee` when known · `blocked_by` for
+   intra-plan dependencies (a dependency IS a blocker; blocked is DERIVED,
+   never a status) · optional `priority` 0–4 / `estimate`. Every LEAF carries a
+   `## Done-check`. The blast radius goes on the EPIC's `domains:` — it rides
+   `push_plan` and the platform renders the plan's brain slice beside it.
+   ADR material (alternatives, risks, non-goals) lives in the epic body AND
+   the pivotal choices are logged as DECISIONS at approval (`log_decision`:
+   context · options · decision · rationale; actor = the dev for their calls).
 3. **Ledger pull** (bloom) → optional leverage tasks in the blast radius.
 4. **Leverage-match** — recommend existing skills/tools/MCP that fit the tasks;
    never plan to hand-roll what a capability already does.
@@ -59,6 +67,13 @@ The full choreography earns its weight on cross-cutting work; a one-file change 
 through five steps teaches devs to route around rafa — and a route-around is a product
 failure. So the conductor weighs the **blast radius** (from coverage at recall time):
 
+- **Below planning entirely — DIRECT-DO (conductor 1.8.0):** radius ≤ 1 domain, no
+  contract surface, fits one sitting → NO plan files are created at all. The
+  conductor acts (recall → implement → verify) and the sensors carry the loop
+  (dirty-mark · reflex · checkpoint-at-push · capture if knowledge emerged). Plans
+  begin where RESUMABILITY or COORDINATION begins — not before. If direct-do work
+  GROWS (2nd domain, contract surface, multi-session), the conductor escalates to
+  lite with one announce line and creates the files THEN.
 - **Lite** (radius ≤ 2 domains and no contract/schema surface touched): ONE parent +
   ONE child file, recall scoped to the touched domains, bloom pull skipped, prism gate
   collapses to the two invariants that never relax — every task grounded, the child

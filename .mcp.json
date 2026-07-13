@@ -4,7 +4,7 @@
       "type": "http",
       "url": "http://localhost:3000/api/mcp",
       "headers": {
-        "Authorization": "Bearer rafa_k_10bf46091d0a029b238abc41cd5fbc49455d7187"
+        "Authorization": "Bearer rafa_k_b1a8ef1f3ac85cedc5549a36735da849e546af73"
       }
     }
   }

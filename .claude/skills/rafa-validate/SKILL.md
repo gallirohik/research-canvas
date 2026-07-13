@@ -32,8 +32,11 @@ agent. So:
 ## Procedure (run in order; ground everything in code)
 
 1. **Re-run the checker yourself** — `npx @rafinery/cli verify-citations`. Record exit
-   code + counts (resolution / completeness / policy). Exit ≠ 0 → **blocker(s)**. Never
-   trust a pasted table.
+   code + counts (resolution / completeness / policy / **absence / inventory** — checker
+   v2 mechanizes the 2026-06-08 ratchet: declared `absent:` tokens re-grepped, coverage
+   `inventory:` counts re-computed). Exit ≠ 0 → **blocker(s)**. Never trust a pasted
+   table; confirm `citation-check.json` (checkerVersion · pass · at) matches the run you
+   just made — a stale record riding a push is itself a **blocker**.
 2. **Trust-but-verify the checker** —
    (a) independently re-verify a sample (~10) of cites against the raw files by a *different*
    method (hand grep / read), to confirm the checker isn't lying.
@@ -44,6 +47,16 @@ agent. So:
    A mismatch in (a), or a non-zero `--selftest` in (b) → **blocker** (the verifier is broken).
 3. **Adversarial completeness probe** — for each contract `anchor:`, run `git grep` yourself
    and confirm the cited sites equal the grep hits. Hunt for an omitted site.
+
+3b. **Absence audit — work the WARN list.** The checker's report ends with heuristic WARNs
+   (absence-shaped title/summary with no `absent:` declared). For each: decide whether the
+   claim is truly existence-dependent → if yes, it MUST declare `absent: <token>` (finding:
+   major — an undeclared absence claim is exactly the class that went stale in 2026-06-08);
+   if the wording is just loose, note it as minor. Then hunt for absence claims the
+   heuristic missed: any note whose truth depends on something NOT existing, with no
+   `absent:` gate behind it. The mechanized gate only covers what is declared — YOUR job
+   is the undeclared remainder (the ratchet's disposition protocol: every catch here
+   should end as a new declaration, an eval case, or a recorded judgment).
 4. **Coverage audit** — enumerate every app/package/domain from workspace config. Confirm
    each has a *substantive* note (not a token stub). Tunneling / imbalance → **major**.
 5. **Load-bearing test (the core score)** — pick ONE real feature + ONE real bug. Using ONLY

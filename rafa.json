@@ -5,8 +5,8 @@
   "brainRepo": "https://github.com/gallirohik/rafinary-brain",
   "provisionedFor": "user_3G3JKMFyEVMXIMfeiWgIQ2ihXw9",
   "rafa": {
-    "cli": "0.4.0",
+    "cli": "0.7.0",
     "contract": 1,
-    "plans": 1
+    "plans": 2
   }
 }

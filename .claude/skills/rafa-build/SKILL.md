@@ -17,8 +17,8 @@ platform MCP (one read path — the same surface any third-party agent uses).
 | Role | Agent | Job per task |
 |---|---|---|
 | **Executor** | atlas | RECALL the task's brain slice via MCP (`search_knowledge` + `get_rule`/`get_playbook`; honor non-exemplars) → implement, convention-adherent |
-| **Validator** | prism | validate the execution against the child's `## Done-check` — strict, unbiased, against code + brain, never against atlas's claims. **`status: done` only on prism PASS**; FAIL → atlas corrects (validate-and-correct at work time). This gate is conductor-flow SOP — deterministic enforcement is the deferred capture-engine's job |
-| **Improver** | bloom | **push**: new improvement opportunities spotted during execution → new ledger files. **close**: improvements fixed in passing → `status: fixed`. **nudge**: top-leverage open item in the task's blast radius — opt-in, never blocking |
+| **Validator** | prism | validate the execution against the child's `## Done-check` — strict, unbiased, against code + brain, never against atlas's claims. **`status: done` only on prism PASS**; FAIL → atlas corrects (validate-and-correct at work time). Plan-done adds one line to the verdict: **working set reviewed — captured, or clean-with-reason** (a build that learned nothing SAYS so; a build that learned something SHOWS the files) |
+| **Improver** | bloom | **push**: new improvement opportunities spotted during execution → new ledger files. **close**: improvements fixed in passing → `status: fixed` in the ledger file + `report_improvement_status(id, fixed)` so the platform shows it LIVE as pending-reconciliation (the ledger row itself changes only at the next brain push — K1). **nudge**: top-leverage open item in the task's blast radius — opt-in, never blocking |
 
 ## Procedure
 
@@ -40,15 +40,31 @@ platform MCP (one read path — the same surface any third-party agent uses).
    parsed; the plan files at `.rafa/plans/<plan>/` ARE the local cache) → at the
    task-done CHECKPOINT (under the session consent): `push_plan` /
    `update_plan_status` (the plans channel — statuses + Log journals) +
+   **`log_decision` for each deliberation since the last checkpoint** — what
+   came up, what was considered, what the DEV chose, why (actor = the dev for
+   steering, the agent for its own proposals; PARAPHRASE + short verbatim
+   quotes only where the wording carries the decision — transcripts never land
+   in shared stores; mirror each into the item's `## Decisions` section) +
+   **`report_loop_event(category: "prism-verdict", outcome: PASS|ITERATE,
+   subject: <task id>)`** at the moment prism rules on the Done-check (sage's
+   evidence — shapes only: the verdict + the task id, never code) +
    `rafa checkpoint` (the branch working set), so the platform and every MCP
    consumer reflect live progress. Checkpoint moments: task done · plan
-   approved · explicit ask · cadence · git push/pull — never session-end. A
-   checkpoint CONFLICT (a teammate's newer copy of the same file) is decided
-   IN THIS SESSION: read the `.theirs.md` copy, merge/adopt/keep, re-checkpoint.
+   approved · explicit ask · cadence · git push/pull — never session-end. The
+   loop-event emits ride the SAME checkpoint beats — one per outcome as it
+   occurs, monotonic, NEVER a session-end sweep. The
+   git-push boundary is MECHANICAL (M5): the pre-push hook runs `rafa checkpoint`
+   itself, non-blocking — the session still owns the task-done/plan-approved
+   moments. A checkpoint CONFLICT (a teammate's newer copy of the same file) is
+   decided IN THIS SESSION: read the `.theirs.md` copy, merge/adopt/keep,
+   re-checkpoint.
 3. **Brain changes mid-build — WHERE you are decides WHERE it goes.**
    - **On the default branch (main):** run a full `/rafa scan` (regenerate →
      prism → compile → push); the brain re-stamps at the new sha, so
-     `brain = f(code@sha)` stays exact.
+     `brain = f(code@sha)` stays exact. When the gate runs, emit
+     **`report_loop_event(category: "gate-result", outcome: exit0|failed,
+     subject: <compile|verify-citations>)`** at that checkpoint beat — the gate's
+     own moment, never deferred to session-end.
    - **On any other branch:** the org brain is NEVER written from a branch —
      it describes main, and a branch-state scan would poison it for everyone.
      Invalidated/learned knowledge → the branch **working set**: hydrate the
@@ -61,6 +77,10 @@ platform MCP (one read path — the same surface any third-party agent uses).
 4. **Verify** (prism-style) before declaring the plan done; final `push_plan` +
    `set_active_plan` (clear) + `rafa checkpoint`. A plan that stops being worth
    finishing closes honestly: `superseded` or `abandoned`, never fake-`done`.
+   Plan-done is also a **staleness boundary**: read `rafa dirty --json` — if the
+   build's edits dirtied notes this session didn't already refresh, surface the
+   scoped-refresh offer NOW (on main: refresh → gates → push; on a branch:
+   working-set edit → checkpoint), and `rafa dirty --consume` only after it ships.
 
 **Lite plans** (single-child, from plan-lite) run the same per-task loop — the
 Done-check gate never relaxes; only the ceremony around it shrinks (no bloom nudge,

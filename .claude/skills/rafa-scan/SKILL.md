@@ -81,9 +81,14 @@ file, finds nothing, and stops trusting the brain. So fidelity is non-negotiable
 - **One docs rule, stated once.** Contract site lists count **code** occurrences; exclude
   docs/markdown/comments. Apply this identically to every contract — never "the full
   surface" for one and "the rest are docs" for another. State the exclusion once per note.
-- **Never assert absence without an exhaustive grep.** "none yet", "greenfield", "not used
-  anywhere" require a repo-wide `git grep` of the pattern first. A sampled read is not
-  evidence of absence — one un-grepped route (e.g. a demo page) invalidates the claim.
+- **Never assert absence without an exhaustive grep — and DECLARE it so the gate re-greps
+  it forever.** "none yet", "greenfield", "not used anywhere" require a repo-wide
+  `git grep` of the pattern first; a sampled read is not evidence of absence. Then declare
+  the token in frontmatter — `absent: <token>` (repeatable, one per line) — so
+  `verify-citations` gate **B3** re-greps it on every run and the claim can never silently
+  go stale (the 2026-06-08 blocker class: code grew the thing the note said was missing).
+  An absence-shaped title/summary with no `absent:` declared is flagged as a checker WARN —
+  resolve every WARN before hand-off (declare the token, or reword the claim).
 
 ---
 
@@ -94,6 +99,12 @@ file, finds nothing, and stops trusting the brain. So fidelity is non-negotiable
 - `.rafa/brain/coverage.md` — the coverage report. **Machine-read frontmatter** per
   [`.claude/rafa/contract.md`](../../rafa/contract.md) §6: `domains: { <domain>: mapped|thin|stubbed|empty, … }`
   — one entry per domain from Step 1. The body keeps the per-criterion PASS/FAIL narrative.
+  **Declare `inventory:` entries** (`- <name> :: <glob> :: <count>`) for each framework
+  surface the scan counted — route pages, API routes, agent graphs, whatever is
+  load-bearing in THIS repo. The checker recomputes each via `git ls-files ':(glob)…'`
+  every run and fails on drift, so coverage can never silently claim an inventory the
+  repo has outgrown. Compute the count FROM the same `git ls-files` command — never from
+  memory of the tree.
 
 **Note format.** The **strict contract is [`.claude/rafa/contract.md`](../../rafa/contract.md) §2** — every
 required field there is mandatory and `rafa compile` (Step 7) **rejects** any violation with a
@@ -137,6 +148,15 @@ retrieval index. Bodies read like a senior engineer explaining that one concept 
 3. **Structural extraction** [deterministic] — imports/exports/AST + framework facts →
    the internal node/relationship model the next steps reason over. (Not emitted as a
    file; it feeds the notes.)
+
+3b. **Toolbox inventory** [deterministic] — ratified 2026-07-12: the REPO toolbox is a
+   first-class brain domain (`toolbox`). Run `npx @rafinery/cli leverage --json` (the
+   deterministic extractor) and author cited notes for the committed toolbox — skills
+   (`.claude/skills/*/SKILL.md` name+description), commands, `.mcp.json` servers,
+   granted permissions — cites into the config files themselves (contract §2; they are
+   citable file:line). This makes the toolbox recallable through the SAME MCP surface
+   as all knowledge and refreshable like any note. Personal `~/.claude/` is NEVER
+   inventoried here (user-profile plane, compass's job, standing consent).
 
 4. **Convention detection** [deterministic + light LLM] — for **each** domain, the local
    idiom (design tokens, component export pattern + any server/client split such as RSC,
@@ -201,8 +221,47 @@ retrieval index. Bodies read like a senior engineer explaining that one concept 
 Producing the brain + a **green checker (gate 1)** completes *this capability's* job. The
 independent QA (prism) and the fix→re-check→re-validate loop are owned by the **conductor**
 — the `/rafa` command, running in the main session — because subagents can't spawn
-subagents, so the loop must live there. **scan.md never spawns prism.** See the `/rafa`
-command for the loop.
+subagents, so the loop must live there. **scan.md never spawns prism.** The full loop is
+the conductor orchestration below (moved here from the conductor card in the 2.0.0 diet, so
+this SOP stays self-contained).
+
+## Conductor orchestration — the `scan` / `init` pipeline (the conductor runs this)
+
+The conductor (not atlas) drives this loop from the main session; atlas is the spawned
+subagent it calls in step 1/5. **`init`** = ensure structure idempotently (`.rafa/active.md`
+= `# No active plan`), then run the full scan below. **`scan`** default runs the whole
+pipeline; **`--brain-only`** stops after the brain is validated (step 5 PASS) — skips improve
++ push, a cheap knowledge refresh.
+
+1. **Scan — spawn `atlas`** context-isolated: *"Run the scan per this SOP: comprehensive,
+   breadth-before-depth, cited notes → `.rafa/brain/{rules,playbooks}/` + `coverage.md`. Run
+   `npx @rafinery/cli verify-citations` until it **exits 0**. Return a coverage summary only —
+   not the raw reads."*
+2. **Gate 1 — checker (trust-but-verify):** re-run `npx @rafinery/cli verify-citations`
+   yourself. Must **exit 0** (else re-spawn atlas to fix). It writes `citation-check.md`.
+3. **Gate 2 — prism:** spawn `prism` **context-isolated**, passing ONLY: *"Validate the scan
+   in `.rafa/brain/` against the repo per your SOP; write `.rafa/brain/checklist.md`."* Never
+   pass atlas's reasoning — prism judges blind.
+4. **Read** `.rafa/brain/checklist.md`. Append this round to `.rafa/brain/log.md`.
+5. **`verdict: PASS`** → continue to Improve. **`ITERATE`** → **spawn `atlas`**: *"Fix every
+   blocker + major per `checklist.md`, re-run the checker to exit 0, return what changed."*
+   Then back to step 2. **Max 3 rounds**; if still not PASS, **STOP** — surface the findings,
+   do **not** improve or push (never improve/push an unvalidated brain).
+6. **Improve** *(skip if `--brain-only`)* — run the improve pass ([rafa-improve](../rafa-improve/SKILL.md)):
+   spawn `bloom` → `.rafa/improve/`. It reads the *validated* brain as its index, so it only
+   runs after PASS.
+7. **Push** — present the full summary (brain verdict/score + top improvements). **On the
+   dev's explicit approval**, `npx @rafinery/cli push` — commits `.rafa/` and pushes to the
+   brain remote using the dev's own git auth, stamped `brain-for: <code sha>`. Never without approval.
+8. **The coach offer (founding scan only)** — if this was the repo's FIRST scan and the dev's
+   user brain is empty (`list_dev_insights` → none), offer ONCE: *"the code side is mapped —
+   want me to bootstrap YOUR insights from your usage report?"* Accepted = run `## insights`
+   (compass; every candidate offered, banked only on yes). The offer rung of the consent
+   ladder — never auto-run, never re-asked after a no.
+
+atlas scans + fixes; prism judges; bloom improves; the conductor orchestrates + pushes on
+approval. The conductor owns `log.md`; it never edits `checklist.md` or the brain itself —
+it spawns atlas for that.
 
 ## Acceptance criteria (strict)
 

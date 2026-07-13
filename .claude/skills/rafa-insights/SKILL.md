@@ -58,9 +58,20 @@ code-level → the branch working set (not yours — rafa.md §capture routes it
 existing insight (`put_dev_insight` with its id) rather than accreting near-
 copies.
 
+### 2b. Personal tooling (ratified 2026-07-12 — the user-plane toolbox)
+Under the dev's STANDING insights consent, inventory the tooling they carry
+across repos — `~/.claude/skills` + user-level MCPs — and bank each as a
+`kind: tooling` insight (NAME + DESCRIPTION only, never file contents). Update
+beats duplicate; tombstones honored. This is what lets rafa orchestrate a
+dev's personal migration skill in a repo that has never seen it. The REPO
+toolbox is atlas's plane (scan's toolbox domain), never yours.
+
 ### 3. Steering (the payoff — propose, the dev disposes)
-At natural boundaries only, at most one nudge: surface the insight that changes
-what the dev does next — "you've corrected X three times: want it banked as a
+At natural boundaries only, at most one nudge — and ALWAYS have a candidate
+ready (leverage-coaching: cross the repo's toolbox inventory with the dev's
+patterns + tooling insights — "you've hand-run this migration three times; the
+repo ships a skill for it"). Availability is always; frequency never rises.
+Surface the insight that changes what the dev does next — "you've corrected X three times: want it banked as a
 rule?" · "this decomposition worked before, reuse it?" · "you never use plan
 mode on big changes; it would have caught this." Dismissal is final for the
 session. Never rank, never compare devs, never nag.

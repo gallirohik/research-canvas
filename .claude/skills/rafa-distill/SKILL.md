@@ -57,7 +57,12 @@ code it describes.
    CAS: only a live row resolves; a failure means ANOTHER runner already
    distilled this branch — STOP and reconcile against what it shipped.
    `resolve_working_file(path, refuted, note)` for failures — TELL the author
-   which files died and why (cited); refutation is feedback, not silence.
+   which files died and why (cited); refutation is feedback, not silence. At
+   that same resolve beat emit **`report_loop_event(category:
+   "distill-refutation", outcome: refuted|distilled, subject: <path or note
+   id>)`** — sage's evidence that a claim met the gates or was refuted (shapes
+   only: the outcome + a file/note reference, never the refuted content, never
+   the cited code). Checkpoint-adjacent, monotonic, never a session-end sweep.
    `resolve_working_file(path, needs-adjudication, note)` for the undecidable —
    the next session's digest offers the decision.
 
