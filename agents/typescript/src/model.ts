@@ -6,6 +6,7 @@ import { AgentState } from "./state";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatXAI } from "@langchain/xai";
 
 function getModel(state: AgentState): BaseChatModel {
   /**
@@ -31,6 +32,9 @@ function getModel(state: AgentState): BaseChatModel {
       model: "gemini-1.5-pro",
       apiKey: process.env.GOOGLE_API_KEY || undefined,
     });
+  }
+  if (model === "grok") {
+    return new ChatXAI({ temperature: 0, model: "grok-4" });
   }
 
   throw new Error("Invalid model specified");
