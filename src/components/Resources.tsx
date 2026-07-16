@@ -27,7 +27,7 @@ export function Resources({
             "bg-background border-0 shadow-none rounded-xl text-md font-extralight focus-visible:ring-0 flex-none" +
             (handleCardClick ? " cursor-pointer" : "")
           }
-          style={{ width: customWidth + "px" || "320px" }}
+          style={{ width: customWidth ? customWidth + "px" : "320px" }}
           onClick={() => handleCardClick?.(resource)}
         >
           <CardContent className="px-6 py-6 relative">

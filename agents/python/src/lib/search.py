@@ -65,6 +65,8 @@ async def search_node(state: AgentState, config: RunnableConfig):
     state["logs"] = state.get("logs", [])
     queries = ai_message.tool_calls[0]["args"]["queries"]
 
+    logs_offset = len(state["logs"])
+
     for query in queries:
         state["logs"].append({"message": f"Search for {query}", "done": False})
 
@@ -83,7 +85,7 @@ async def search_node(state: AgentState, config: RunnableConfig):
         else:
             search_results.append(result)
 
-        state["logs"][i]["done"] = True
+        state["logs"][logs_offset + i]["done"] = True
         await copilotkit_emit_state(config, state)
 
     config = copilotkit_customize_config(
