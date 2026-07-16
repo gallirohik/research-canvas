@@ -1,0 +1,24 @@
+#!/bin/sh
+# rafa pre-push hook v1 (installed by @rafinery/cli init/pull/update — safe to
+# delete; it will be offered again, never forced over a foreign hook).
+#
+# M5 capture engine, sensor #3: `git push` of the CODE branch is a ratified
+# natural checkpoint boundary — so the branch WORKING SET (edited/new brain
+# files) syncs to the platform deterministically here, not only when a session
+# remembers its SOP. Non-blocking by design: a checkpoint problem must never
+# stop a code push (exit 0 on every path; conflicts land as .theirs.md copies
+# for the next session to decide — printed, never auto-resolved).
+
+[ "$RAFA_HOOKS_DISABLED" = "1" ] && exit 0
+[ -f "rafa.json" ] || exit 0
+
+echo "rafa · checkpoint (pre-push boundary) …"
+npx -y @rafinery/cli checkpoint || {
+  code=$?
+  if [ "$code" = "2" ]; then
+    echo "rafa · checkpoint CONFLICT — a teammate's newer copy landed as *.theirs.md; decide in your next session (merge/adopt/keep, re-run rafa checkpoint). Push continues."
+  else
+    echo "rafa · checkpoint skipped (exit $code) — push continues; run 'rafa checkpoint' manually when convenient."
+  fi
+}
+exit 0
