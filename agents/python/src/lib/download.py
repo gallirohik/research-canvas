@@ -2,6 +2,11 @@
 This module contains the implementation of the download_node function.
 """
 
+import asyncio
+import ipaddress
+import socket
+from urllib.parse import urlparse
+
 import aiohttp
 import html2text
 from copilotkit.langgraph import copilotkit_emit_state
@@ -22,11 +27,45 @@ def get_resource(url: str):
 _USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"  # pylint: disable=line-too-long
 
 
+async def _is_safe_url(url: str) -> bool:
+    """
+    Reject URLs that don't resolve to a public address, to block SSRF
+    against internal services / cloud metadata endpoints (e.g. 169.254.169.254).
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        return False
+
+    try:
+        addrinfo = await asyncio.get_event_loop().run_in_executor(
+            None, socket.getaddrinfo, parsed.hostname, None
+        )
+    except socket.gaierror:
+        return False
+
+    return all(
+        not (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        )
+        for family, _, _, _, sockaddr in addrinfo
+        for ip in [ipaddress.ip_address(sockaddr[0])]
+    )
+
+
 async def _download_resource(url: str):
     """
     Download a resource from the internet asynchronously.
     """
     try:
+        if not await _is_safe_url(url):
+            _RESOURCE_CACHE[url] = "ERROR"
+            return "Error downloading resource: URL is not allowed"
+
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url,

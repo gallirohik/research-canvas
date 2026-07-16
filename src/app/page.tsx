@@ -25,7 +25,14 @@ function Home() {
     : `/api/copilotkit`;
 
   return (
-    <CopilotKit runtimeUrl={runtimeUrl} showDevConsole={false} agent={agent}>
+    <CopilotKit
+      runtimeUrl={runtimeUrl}
+      showDevConsole={false}
+      agent={agent}
+      headers={{
+        "x-api-key": process.env.NEXT_PUBLIC_COPILOTKIT_API_KEY || "",
+      }}
+    >
       <Main />
     </CopilotKit>
   );
