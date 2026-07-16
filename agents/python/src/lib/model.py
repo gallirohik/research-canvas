@@ -41,5 +41,9 @@ def get_model(state: AgentState) -> BaseChatModel:
             model="gemini-1.5-pro",
             api_key=cast(Any, os.getenv("GOOGLE_API_KEY")) or None,
         )
+    if model == "grok":
+        from langchain_xai import ChatXAI
+
+        return ChatXAI(temperature=0, model="grok-4")
 
     raise ValueError("Invalid model specified")

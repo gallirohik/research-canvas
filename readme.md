@@ -37,6 +37,7 @@ Then, create a `.env` file inside `./agent-py` or `./agent-js` with the followin
 ```
 OPENAI_API_KEY=...
 TAVILY_API_KEY=...
+XAI_API_KEY=...(for the Grok model option)
 LANGSMITH_API_KEY=...(JS ONLY)
 ```
 

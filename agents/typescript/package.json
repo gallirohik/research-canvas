@@ -17,6 +17,7 @@
     "@langchain/langgraph": "0.2.44",
     "@langchain/langgraph-cli": "^0.0.10",
     "@langchain/openai": "^0.3.14",
+    "@langchain/xai": "^0.1.0",
     "@tavily/core": "^0.0.2",
     "html-to-text": "^9.0.5",
     "zod": "^3.23.8"
