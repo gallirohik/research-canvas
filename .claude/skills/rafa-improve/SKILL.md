@@ -5,6 +5,11 @@ description: "rafa SOP — bloom's continuous-improvement pass: multi-lens, cite
 
 # improve — continuous improvement  (capability #2)
 
+> **First worklist, every pass:** `list_improvements` and treat every `reported`
+> overlay (a live session's fixed-in-passing signal) as a verification candidate —
+> confirm against the code, update the row through the gates. A report stays
+> pending until the ROW catches up; only this pass makes it converge.
+
 rafa's second mission: **drive the codebase worst → well-managed, compounding via work
 the dev is already doing.** A living, prioritized, cited **improvement ledger** — not a throwaway
 report. Kept in `.rafa/improve/`, **never** in `.rafa/brain/` (knowledge and assessment

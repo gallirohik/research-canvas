@@ -1,5 +1,5 @@
 ---
-version: 2.0.0
+version: 2.0.2
 description: rafa — the repo's engineering SOP. Use whenever the dev wants to plan a feature or change, build/execute against the active plan, improve code health, or ground work in the repo's brain — intent counts, the dev does NOT need to type /rafa. Also explicit: /rafa <init|scan|improve|plan|build|push|leverage|migrate|update|help> [--brain-only]. Admin verbs (init/scan/push/migrate/update) run ONLY when explicitly invoked.
 ---
 
@@ -123,6 +123,13 @@ Dismissible as a unit; offer fatigue trains reflexive yes, which corrodes every 
 rung above it. Open gaps are one more line in this ONE digest — a pullable source, never
 a serial prompt and never mid-flow.
 
+**Exception — a `[rafa · doctor]` digest line is NOT dismissible-later.** It means the
+capture machinery itself is broken (unwired sensor, missing/foreign git hook, a recent
+swallowed failure): run `npx -y @rafinery/cli doctor` FIRST and present its named fixes
+to the dev as concrete next steps before knowledge work — every task done on dead
+sensors is knowledge silently lost. This fires on new sessions AND resumes (the
+SessionStart hook covers both).
+
 **The M5 sensors feed you — you never poll.** Four deterministic instruments run outside
 the model (blueprint hooks + the git boundary): the SessionStart digest injects
 staleness/conflicts/corrections/active-plan at session start · every Edit/Write is
@@ -199,6 +206,17 @@ Two destinations, one rule — route by what the observation is ABOUT:
 > **Every verb that writes `.md` is under the OKF surface** (contract §11): files
 > self-describe, body links are bundle-relative markdown, `rafa push` materializes
 > the rest — protocol + the two declared exceptions live in [rafa-okf](../skills/rafa-okf/SKILL.md).
+>
+> **MCP scope — every `mcp__rafinery` call:** omit `repo` (the key IS the scope;
+> the server derives it); where explicitly needed it is `rafa.json → repoId`,
+> never a folder-name guess. Mid-session 401 after a key rotation = this session
+> holds the OLD connect-time key — have the dev reconnect the rafinery MCP (or
+> restart); CLI tools reload credentials per call and keep working.
+>
+> **Fixed-in-passing is REPORTED, always:** any ledger improvement fixed during
+> ANY work — inside or outside a /rafa verb — gets `report_improvement_status`
+> at the fix boundary. Hand-edits never flip ledger status; an unreported fix
+> leaves bloom's ledger lying until the next full pass.
 
 Each work/admin verb dispatches to its SOP. Read the skill only when the verb runs; it is
 self-contained and ADR-shaped. **You orchestrate + push on approval; the subagent follows
@@ -216,7 +234,7 @@ explicitly typed; an ACCEPTED boundary offer counts as the explicit invocation.
 | `insights` | spawn compass → bootstrap/refresh the dev's private user brain from their native `/insights` report + recent work; every candidate OFFERED, banked only on yes (`put_dev_insight`). Capture during normal work is §capture's job, not this command. | [rafa-insights](../skills/rafa-insights/SKILL.md) |
 | `leverage` | reason over the committed toolbox (`.claude/settings.json`, `.mcp.json`, `skills/`, `commands/`, the stack) — what's missing/misconfigured/unused; on approval apply the fix EXACTLY (merge permissions, wire an MCP, scaffold a skill). Merge, never clobber; show the diff. The CLI reports, you fix. | [rafa-leverage](../skills/rafa-leverage/SKILL.md) |
 | `sage` | explicit OVERRIDE of the implicit observer pass (below) | [rafa-sage](../skills/rafa-sage/SKILL.md) |
-| `push` | `npx @rafinery/cli push` — commit `.rafa/` and push to the brain remote (the dev's own git auth), stamped `brain-for: <code sha>`. After a scan, or to re-sync a changed brain. Never without approval. | — |
+| `push` | `npx @rafinery/cli push --verb=<scan\|improve\|build\|update>` — commit `.rafa/` and push to the brain remote (the dev's own git auth), stamped `brain-for: <code sha>`. Pass the verb of the work that produced this push (P4 descriptive commits — the brain history should say `brain(scan): …`, never a wall of `update`). After a scan, or to re-sync a changed brain. Never without approval. | — |
 | `migrate` · `update` | brain-side schema migration — see below | — |
 | `help` (also no arg / unrecognized) | print this reference verbatim, then stop | — |
 

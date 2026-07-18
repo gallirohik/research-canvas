@@ -47,6 +47,7 @@ doesn't validate, compile fails.
 | improvement           | `improve/improvements/*.md`       | **structured**                                                                                                                     | §3                                                                                                                                                            | bloom      |
 | ledger                | `improve/ledger.md`               | **structured**                                                                                                                     | §5                                                                                                                                                            | bloom      |
 | plan                  | `plans/**/*.md`                   | **structured**                                                                                                                     | §7                                                                                                                                                            | plan/build |
+| reconciliation report | `brain/reconciliations/*.md`      | **structured** (validated, NOT in the manifest — travels on the brain-repo transport, like plans)                                  | `run` (merge sha) · `outcome` ∈ `succeeded`\|`needs-attention`\|`superseded` · `tier` ∈ `canonical`\|`provisional`; refutation/deletion records ride INSIDE (body sections — one class); minted via `rafa okf new reconciliation-report` | distiller  |
 | log                   | `brain/log.md`                    | **verbatim**                                                                                                                       | — (prose trail; OKF-reserved name, §11)                                                                                                                       | conductor  |
 | index                 | `**/index.md`                     | **generated**                                                                                                                      | — (OKF §6 listings, by `rafa okf`; the ROOT index alone carries frontmatter: `okf_version` + provenance)                                                      | tool       |
 | citation-check        | `**/citation-check.md`            | **generated**                                                                                                                      | — (by `rafa verify-citations`; self-describing frontmatter, §11)                                                                                              | tool       |
@@ -500,7 +501,11 @@ match.
 | `get_plan`                                      | `repo`, `id` (parent or child)            | parent + all children **with stored bodies** + **derived** progress; a child id resolves the whole plan with `requestedChild` set — this is what "load plan X" materializes into `.rafa/plans/` |
 | `get_active_plan`                               | `repo`                                    | resolves the channel pointer (`set_active_plan`) → `get_plan`, or "no active plan"                                                                                                              |
 
-`repo` must match the key's scope exactly; `branch` is reserved (branch-keyed
+`repo` is OPTIONAL on every tool — the scope is DERIVED from the per-repo key
+(the key IS the repo identity; a derivation from an authenticated fact, never an
+assumed value). When provided it must match the registered id exactly — loud
+mismatch, never a fallback. Sessions that pass it read the id from the committed
+`rafa.json` `repoId`, never a folder name. `branch` is reserved (branch-keyed
 instances land in Slice 2 — third-party clients default to the production brain,
 i.e. the default branch's instance).
 
@@ -538,7 +543,13 @@ intent degrades to search; a wrong intent would answer the wrong thing.
    silent throttle.
 
 **Auth:** per-repo machine keys, minted on the platform, sent as
-`Authorization: Bearer`. Keys are stored hashed platform-side and live client-side in
+`Authorization: Bearer`. **Rotation is zero-downtime by design:** keys COEXIST —
+mint the replacement, update the configs (settings.local.json · credentials.json ·
+CI secrets), then revoke the old at leisure; revoke stays an immediate kill (a
+security act, never graced). A live session holds its connect-time key — reconnect
+the rafinery MCP server (or restart the session) after swapping; the CLI tools
+(checkpoint · hydrate · distill) resolve credentials fresh per invocation and are
+never stale. Keys are stored hashed platform-side and live client-side in
 `~/.config/rafinery/credentials.json` — never inside the code repo or this brain repo.
 
 **Client wiring (written by `rafa init`, secret-free where committed):** a key is
@@ -551,7 +562,7 @@ minted at setup generation and delivered consume-once through the setup fetch;
 ### §9 addendum — state-plane tools (three-store model, working-set architecture)
 
 The knowledge plane stays strictly read-only (org-brain writes go ONLY through
-files → compile → push → ingest). Seven additional tools write **collaboration
+files → compile → push → ingest). Additional tools write **collaboration
 state**, marked by `envelope.plane: "state"`:
 
 | Tool                                                                                   | Store                                                   | Notes                                                                                                                                                                                                                                                                                                                                                                |
@@ -563,6 +574,11 @@ state**, marked by `envelope.plane: "state"`:
 | `fold_working_set`                                                                     | branch working set                                      | branch→parent-branch MECHANICAL fold (no LLM, no prism — rigor only at main): absent → re-keyed · identical → merged · divergent → `needs-adjudication` on the parent row                                                                                                                                                                                            |
 | `push_plan` / `list_plans` / `update_plan_status` / `set_active_plan` / `log_decision` | **plans** — (repo) work objects                         | the push-on-approval channel (§7 v2): approval pushes the whole work-item TREE (items[], bodies stored); `list_plans` = names only; statuses push back (5-value enum — blocked is derived); `log_decision` records the deliberation trail (paraphrase + pivotal quotes); the active pointer is explicit, never inferred                                              |
 | `report_improvement_status`                                                            | **events only** — no store                              | a LIVE session signal (bloom's fixed-in-passing during build). The improvement ledger row is untouched — it has ONE writer, the ingest (K1); the platform overlays the report as pending-reconciliation until the next brain push confirms it                                                                                                                        |
+| `reconcile_claim`                                                                      | **reconciliations queue** — (repo) run rows            | executor claim (`plane:"state"`): ACID no-running-sibling assert → returns the attempt token; delegates to `reconciliations.claim`; stamps the actor envelope `{model, agent, runner}` (runner ∈ `sandbox`\|`ci`\|`session`, enum-checked at the boundary) on the row                                                                                          |
+| `reconcile_heartbeat`                                                                   | reconciliations queue                                   | extends the wall-clock lease + sets the phase; **attempt-fenced** (a non-current attempt is rejected, nothing written); actor envelope re-stamped                                                                                                                                                                                                                    |
+| `reconcile_log_append`                                                                  | **reconciliationLogs** — the run log tail               | batched chunks, **secret-screened PER LINE** (the same `looksLikeSecret` screen — a credential chunk is rejected by chunk/line index, nothing stored or echoed) + **attempt-fenced**; `seq`-ordered; UNLOGGED (emits its own `reconcile.log` event, counts only)                                                                                                       |
+| `reconcile_report`                                                                      | reconciliations queue (+ knowledge node on success)     | terminal outcome + node delta + meter; **attempt-fenced**; success COMPOSES the pointer advance atomically (insert node + move pointer, one mutation); refutation/deletion ride the success outcomes; actor envelope stamped                                                                                                                                          |
+| `list_working_sets`                                                                     | branch working set (**READ**)                           | enumerates branches with LIVE candidate rows + counts only (no bodies) — closes the 07-14 sensor gap (`get_working_set` needs a branch arg; nothing listed them); feeds the SessionStart digest pending line                                                                                                                                                         |
 
 State tools work with or without an ingested brain (a working set can exist —
 and a plan can be pushed — before the first scan) and are exempt from the
@@ -570,6 +586,18 @@ snapshot/ingestError gates. `get_plan`/`get_active_plan` share this exemption
 (plans are work objects, not snapshot-derived knowledge). The retired
 bucket-note tools (`stage/list/resolve_bucket_note`, pre-0.4.0) are superseded
 by the working-set tools.
+
+**Typed candidates (capture-engine P2, additive).** A working-set row's KIND
+derives from its path — never from a parallel field that could drift:
+`brain/rules|playbooks/**` = **note** (§2, judged on "does the claim hold?");
+`improve/improvements/**` = **improvement** (§3, judged on the LIFECYCLE —
+"is the defect actually gone / does it actually exist on merged main?"; the
+row resolution stays the standard enum, the verdict note carries
+`confirmed-fixed` / `still-open` / `opened`); `intent/**` = **intent record**
+(the post-commit hook's per-commit provenance — consumed at merge, never
+judged, never authored into the org brain). `improve/ledger.md` is DERIVED
+and never a candidate. schemaVersion stays 1 — this section is purely
+additive (§8).
 
 ## 10. Agent cards — `../.claude/agents/*.md` (local gate)
 

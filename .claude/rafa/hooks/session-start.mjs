@@ -12,6 +12,7 @@
 // (get_code_context batch, ≤ 2s, fail-soft to local counts). Never blocks a
 // session: every path exits 0. Honors RAFA_HOOKS_DISABLED=1.
 
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -43,6 +44,22 @@ function dirtyEntries(rafaDir) {
     }
   }
   return [...files.keys()];
+}
+
+// OPEN improvements whose cited files are dirty — fixed-in-passing candidates
+// (the ledger lies until each is verified + report_improvement_status'd; this
+// nag is deterministic code, not SOP adherence). null = no local manifest.
+function openFixCandidates(rafaDir, files) {
+  const m = readJson(join(rafaDir, "manifest.json"));
+  if (!m || !Array.isArray(m.improvements)) return null;
+  const want = new Set(files);
+  const out = [];
+  for (const i of m.improvements) {
+    if (i.status !== "open") continue;
+    const hits = [...new Set((i.cites ?? []).filter((c) => want.has(c.file)).map((c) => c.file))];
+    if (hits.length) out.push({ id: i.id, priority: i.priority });
+  }
+  return out;
 }
 
 // file → citing note ids, from the LOCAL manifest (a full pull / prior compile).
@@ -149,6 +166,58 @@ function conflictCopies(rafaDir) {
   return out;
 }
 
+// Capture-machinery self-check (P0, owner ask 2026-07-18): a session that
+// starts — or resumes — on broken sensors must SAY so and hand the dev next
+// steps, not silently lose its knowledge. Wiring + recorded failures only;
+// never a network call inside a hook (doctor does the round-trip on demand).
+function machineryProblems(root, rafaDir) {
+  const problems = [];
+  let settings = null;
+  try {
+    settings = JSON.parse(readFileSync(join(root, ".claude", "settings.json"), "utf8"));
+  } catch {
+    /* handled by the wired() checks below */
+  }
+  const wired = (event, script) =>
+    JSON.stringify(settings?.hooks?.[event] ?? []).includes(`rafa/hooks/${script}`) &&
+    existsSync(join(root, ".claude", "rafa", "hooks", script));
+  if (!wired("PostToolUse", "post-tool.mjs")) problems.push("dirty-marker unwired");
+  if (!wired("UserPromptSubmit", "user-prompt-submit.mjs")) problems.push("steering unwired");
+  let hooksDir = join(root, ".git", "hooks");
+  try {
+    // --git-path resolves worktrees correctly; plain .git/hooks is the fallback.
+    hooksDir = join(
+      root,
+      execSync("git rev-parse --git-path hooks", {
+        cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }).trim(),
+    );
+  } catch {
+    /* plain .git/hooks fallback */
+  }
+  for (const h of ["pre-push", "post-commit", "post-checkout", "post-rewrite"]) {
+    try {
+      if (!readFileSync(join(hooksDir, h), "utf8").includes("rafa"))
+        problems.push(`git ${h} hook is foreign (chain line missing)`);
+    } catch {
+      problems.push(`git ${h} hook missing`);
+    }
+  }
+  try {
+    const rows = readFileSync(join(rafaDir, "sensor-errors.jsonl"), "utf8")
+      .split("\n")
+      .filter(Boolean);
+    const last = rows.length ? JSON.parse(rows[rows.length - 1]) : null;
+    if (last?.t && Date.now() - last.t < 48 * 3600 * 1000)
+      problems.push(`recent swallowed failure: ${last.error ?? last.hook}`);
+  } catch {
+    /* no recorded failures */
+  }
+  return problems;
+}
+
 try {
   if (process.env.RAFA_HOOKS_DISABLED === "1") process.exit(0);
   const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
@@ -156,6 +225,16 @@ try {
   const rafaDir = join(root, ".rafa");
 
   const lines = [];
+
+  const machinery = machineryProblems(root, rafaDir);
+  if (machinery.length)
+    lines.push(
+      `[rafa · doctor] capture machinery is NOT fully live: ` +
+        machinery.slice(0, 4).join(" · ") +
+        (machinery.length > 4 ? ` (+${machinery.length - 4} more)` : "") +
+        ` — run \`npx -y @rafinery/cli doctor\` FIRST and relay its named fixes to the dev as ` +
+        `concrete next steps; until fixed, this session's knowledge may be silently lost.`,
+    );
 
   const dirty = dirtyEntries(rafaDir);
   if (dirty.length) {
@@ -176,6 +255,20 @@ try {
         dirty.length >= DIRTY_FILES_ALARM || noteIds.length >= CITED_NOTES_ALARM
           ? `[rafa · staleness] drift is past the threshold (${dirty.length} files / ${noteIds.length} notes) — recommend a brain refresh from main (\`/rafa scan --brain-only\`) at the next natural boundary.`
           : `[rafa · staleness] at the next natural boundary, OFFER a scoped refresh of just the citing notes (atlas re-derives them, gates run as usual, then checkpoint). After the refresh: \`rafa dirty --consume\`.`,
+      );
+  }
+
+  if (dirty.length) {
+    const candidates = openFixCandidates(rafaDir, dirty);
+    if (candidates && candidates.length)
+      lines.push(
+        `[rafa · ledger] ${candidates.length} OPEN improvement(s) cite dirty files — possible fixed-in-passing: ` +
+          candidates
+            .slice(0, 6)
+            .map((c) => `${c.priority} ${c.id}`)
+            .join(" · ") +
+          (candidates.length > 6 ? " …" : "") +
+          ` — verify each; fixed → report_improvement_status(id, fixed). An unreported fix leaves the ledger lying.`,
       );
   }
 

@@ -2,7 +2,7 @@
   "mcpServers": {
     "rafinery": {
       "type": "http",
-      "url": "https://rafinery-web-env-develop-rafinery.vercel.app/api/mcp",
+      "url": "https://dev.rafinery.ai/api/mcp",
       "headers": {
         "Authorization": "Bearer ${RAFA_MCP_KEY}"
       }

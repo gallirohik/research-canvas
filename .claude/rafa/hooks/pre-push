@@ -19,6 +19,28 @@ npx -y @rafinery/cli checkpoint || {
     echo "rafa · checkpoint CONFLICT — a teammate's newer copy landed as *.theirs.md; decide in your next session (merge/adopt/keep, re-run rafa checkpoint). Push continues."
   else
     echo "rafa · checkpoint skipped (exit $code) — push continues; run 'rafa checkpoint' manually when convenient."
+    # P0: a swallowed failure must still reach the heartbeat — record it so the
+    # next checkpoint's report_sensor_health carries it (best-effort, silent).
+    mkdir -p .rafa 2>/dev/null && printf '{"t":%s000,"hook":"pre-push","error":"checkpoint exit %s"}\n' "$(date +%s)" "$code" >> .rafa/sensor-errors.jsonl 2>/dev/null || true
   fi
 }
+
+# Capture-engine P1 ceremony: durably push the MIRRORED brain branch so capture
+# survives a dead laptop, a closed PR, an abandoned branch. Trunk pushes skip —
+# the brain default branch is the distiller's; sessions never push it. A
+# diverged remote (two clones on one branch) takes a mechanical transport
+# replay; a real conflict is left intact for the next session, never forced.
+BR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+if [ -n "$BR" ] && [ "$BR" != "main" ] && [ "$BR" != "master" ] && [ -d ".rafa/.git" ]; then
+  if git -C .rafa rev-parse --verify -q "refs/heads/$BR" >/dev/null 2>&1; then
+    echo "rafa · brain branch push ($BR) …"
+    git -C .rafa push -q -u origin "$BR" 2>/dev/null || {
+      git -C .rafa pull -q --rebase origin "$BR" 2>/dev/null && git -C .rafa push -q -u origin "$BR" 2>/dev/null || {
+        git -C .rafa rebase --abort >/dev/null 2>&1
+        echo "rafa · brain branch push skipped (remote diverged on the same file) — the next session reconciles; code push continues."
+        printf '{"t":%s000,"hook":"pre-push","error":"brain branch push diverged"}\n' "$(date +%s)" >> .rafa/sensor-errors.jsonl 2>/dev/null || true
+      }
+    }
+  fi
+fi
 exit 0

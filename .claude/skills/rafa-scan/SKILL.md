@@ -254,7 +254,7 @@ pipeline; **`--brain-only`** stops after the brain is validated (step 5 PASS) �
    spawn `bloom` → `.rafa/improve/`. It reads the *validated* brain as its index, so it only
    runs after PASS.
 7. **Push** — present the full summary (brain verdict/score + top improvements). **On the
-   dev's explicit approval**, `npx @rafinery/cli push` — commits `.rafa/` and pushes to the
+   dev's explicit approval**, `npx @rafinery/cli push --verb=scan` — commits `.rafa/` and pushes to the
    brain remote using the dev's own git auth, stamped `brain-for: <code sha>`. Never without approval.
 8. **The coach offer (founding scan only)** — if this was the repo's FIRST scan and the dev's
    user brain is empty (`list_dev_insights` → none), offer ONCE: *"the code side is mapped —
