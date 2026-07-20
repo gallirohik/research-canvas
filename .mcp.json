@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "rafinery": {
+      "type": "http",
+      "url": "https://dev.rafinery.ai/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${RAFA_MCP_KEY}"
+      }
+    }
+  }
+}
