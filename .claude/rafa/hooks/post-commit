@@ -1,0 +1,11 @@
+#!/bin/sh
+# rafa post-commit hook v1 (installed by @rafinery/cli init/pull/update — safe
+# to delete; offered again, never forced over a foreign hook).
+#
+# Capture-engine P1: ONE brain commit per code commit (strict 1-1) on the
+# MIRRORED brain branch, with the commit's intent record inside. Hook-owned —
+# the dev never maintains the brain. Non-blocking and silent on every path.
+[ "$RAFA_HOOKS_DISABLED" = "1" ] && exit 0
+[ -f "rafa.json" ] || exit 0
+node ".claude/rafa/hooks/brain-commit.mjs" >/dev/null 2>&1 || true
+exit 0

@@ -1,0 +1,12 @@
+{
+  "name": "research-canvas",
+  "repoId": "gallirohik-research-canvas",
+  "codeRepo": "https://github.com/gallirohik/research-canvas",
+  "brainRepo": "https://github.com/gallirohik/rafinary-brain",
+  "provisionedFor": "user_3G3JKMFyEVMXIMfeiWgIQ2ihXw9",
+  "rafa": {
+    "cli": "0.8.6",
+    "contract": 1,
+    "plans": 2
+  }
+}
