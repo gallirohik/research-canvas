@@ -24,3 +24,18 @@ export type AgentState = {
   logs: Log[];
   citations: Citation[];
 };
+
+// Single source of truth for a freshly-seeded AgentState. `model` is only known
+// at render time (via useModelSelectorContext), so this is a factory rather than
+// a static constant. Both useCoAgent hooks (Main.tsx, ResearchCanvas.tsx) must
+// seed the SAME shape or the shared coagent state becomes mount-order dependent.
+export function createInitialAgentState(model: string): AgentState {
+  return {
+    model,
+    research_question: "",
+    report: "",
+    resources: [],
+    logs: [],
+    citations: [],
+  };
+}
