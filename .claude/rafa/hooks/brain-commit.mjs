@@ -105,6 +105,19 @@ try {
     /* not a merge / rev-list unavailable — normal 1-1 path */
   }
 
+  // The BRANCH MANIFEST (harness-arc wave 1, manifest-as-handoff): every brain
+  // commit carries a lenient snapshot of the branch's knowledge state, so the
+  // reconciler (or any agent) reads "what this branch believes" at any ref.
+  // Delegated to the CLI (`rafa manifest` — okf-parsed, never a second parser);
+  // best-effort + bounded: a missing/slow CLI must never block a code commit.
+  try {
+    const localRafa = join(ROOT, "node_modules", ".bin", "rafa");
+    const runner = existsSync(localRafa) ? `"${localRafa}"` : "npx -y @rafinery/cli";
+    sh(`${runner} manifest`, ROOT, 30000);
+  } catch {
+    /* snapshot skipped — the reconciler treats a stale/absent branch manifest as null */
+  }
+
   // The intent record — the commit's end-to-end intent, mechanically joined.
   // Minimal here (sha · subject · files); the P3 capture worker enriches.
   const fullSha = sh("git rev-parse HEAD");
@@ -128,6 +141,33 @@ try {
       files.map((f) => `- ${f}`).join("\n") +
       `\n`,
   );
+
+  // Local-state exclusion (owner 2026-07-24): the hydration sidecar + sensor
+  // queues are MACHINE state, never knowledge — ensure the ignore entries and
+  // UNTRACK anything an earlier CLI's window let git track (a .gitignore entry
+  // alone never untracks; `git add -A` would keep committing it forever).
+  // Best-effort: exclusion must never block a code commit.
+  try {
+    const LOCAL_STATE = [
+      "hydration.json",
+      "dirty.jsonl",
+      "reflex.jsonl",
+      "sensor-errors.jsonl",
+      "distill-verdicts.json",
+      "benchmark.demo.json",
+    ];
+    const gi = join(rafa, ".gitignore");
+    const cur = existsSync(gi) ? readFileSync(gi, "utf8") : "";
+    const have = new Set(cur.split("\n").map((l) => l.trim()).filter(Boolean));
+    const missing = [...LOCAL_STATE, "*.theirs.md", "distill-incoming/"].filter((l) => !have.has(l));
+    if (missing.length)
+      writeFileSync(gi, cur + (cur === "" || cur.endsWith("\n") ? "" : "\n") + missing.join("\n") + "\n");
+    for (const p of LOCAL_STATE) shR(`git rm -q --cached --ignore-unmatch "${p}"`);
+    shR('git rm -q -r --cached --ignore-unmatch distill-incoming');
+    shR('git rm -q --cached --ignore-unmatch "*.theirs.md"');
+  } catch {
+    /* exclusion is best-effort */
+  }
 
   shR("git add -A");
   disposeHydrations(branch);

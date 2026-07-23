@@ -253,7 +253,19 @@ pipeline; **`--brain-only`** stops after the brain is validated (step 5 PASS) �
 6. **Improve** *(skip if `--brain-only`)* — run the improve pass ([rafa-improve](../rafa-improve/SKILL.md)):
    spawn `bloom` → `.rafa/improve/`. It reads the *validated* brain as its index, so it only
    runs after PASS.
-7. **Land it** — present the full summary (brain verdict/score + top improvements). **On the
+7. **Prove it — the measured benchmark** *(skip if `--brain-only`; skip if
+   `.rafa/benchmark.json` already carries `measured: true` for this repo)* —
+   the proof engine is WORKFLOW-WOVEN, never a dev-typed command (owner
+   2026-07-24): the conductor drives `rafa benchmark` itself right after the
+   brain PASSes — cut the two worktrees (cold vs brain; the scaffold does
+   this), run the task fixture in EACH (the conductor IS the driving loop the
+   scaffold documents), collect the harness token counts, then
+   `rafa benchmark --counts <file> --push` so the Efficiency page's
+   "measured on this repo: N×" widget carries a real row. Announce-and-proceed
+   ("measuring the brain-vs-cold token proof — say stop to skip"); a decline
+   is honored and not re-asked this session. `--dry-run` fixture numbers are
+   demo-only and can never land as proof (the handler refuses them).
+8. **Land it** — present the full summary (brain verdict/score + top improvements). **On the
    dev's explicit approval**, land the brain the way EVERY brain change lands — through the
    commit hooks, **never a direct trunk push** (the reconciler is the org brain's only writer).
    The dev MUST be on a feature branch (the post-commit hook no-ops on `main`). Then:
@@ -263,7 +275,7 @@ pipeline; **`--brain-only`** stops after the brain is validated (step 5 PASS) �
    `git merge` + push — both work) → detection enqueues and the **reconciler** authors the org
    brain at the merge sha, minting the node (brain ↔ code). Do **not** run `rafa push` (retired:
    it wrote the trunk directly, bypassing the reconciler). Never land without approval.
-8. **The coach offer (founding scan only)** — if this was the repo's FIRST scan and the dev's
+9. **The coach offer (founding scan only)** — if this was the repo's FIRST scan and the dev's
    user brain is empty (`list_dev_insights` → none), offer ONCE: *"the code side is mapped —
    want me to bootstrap YOUR insights from your usage report?"* Accepted = run `## insights`
    (compass; every candidate offered, banked only on yes). The offer rung of the consent

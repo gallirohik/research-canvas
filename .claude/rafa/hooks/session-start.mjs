@@ -300,6 +300,16 @@ try {
     }
   }
 
+  // Benchmark liveness (harness-arc: the proof engine is workflow-woven, never a
+  // dev-typed command) — a scanned brain with no MEASURED benchmark is a gap the
+  // scan SOP's Prove-it step closes. Absence sensor only; never a nag mid-flow.
+  const hasBrain = existsSync(join(rafaDir, "brain", "rules"));
+  const measuredBenchmark = readJson(join(rafaDir, "benchmark.json"))?.measured === true;
+  if (hasBrain && !measuredBenchmark)
+    lines.push(
+      `[rafa · benchmark] no measured token-proof for this repo yet — the next /rafa scan runs the Prove-it step (brain-vs-cold, harness-counted) automatically.`,
+    );
+
   // Suggested next — ONE deterministic recommendation, ranked by consequence:
   // a teammate blocked by a conflict > an unbanked correction > resuming the
   // active plan > staleness repair. Guidance is front-loaded here (and ambient

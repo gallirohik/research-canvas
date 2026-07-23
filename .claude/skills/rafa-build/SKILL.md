@@ -19,6 +19,7 @@ platform MCP (one read path — the same surface any third-party agent uses).
 | **Executor** | atlas | RECALL the task's brain slice via MCP (`search_knowledge` + `get_rule`/`get_playbook`; honor non-exemplars) → implement, convention-adherent |
 | **Validator** | prism | validate the execution against the child's `## Done-check` — strict, unbiased, against code + brain, never against atlas's claims. **`status: done` only on prism PASS**; FAIL → atlas corrects (validate-and-correct at work time). Plan-done adds one line to the verdict: **working set reviewed — captured, or clean-with-reason** (a build that learned nothing SAYS so; a build that learned something SHOWS the files) |
 | **Improver** | bloom | **push**: new improvement opportunities spotted during execution → new ledger files. **close**: improvements fixed in passing → `status: fixed` in the ledger file + `report_improvement_status(id, fixed)` so the platform shows it LIVE as pending-reconciliation (the ledger row itself changes only at the next brain push — K1). **nudge**: top-leverage open item in the task's blast radius — opt-in, never blocking |
+| **Coach** | compass | **sitback** (harness-arc): after each task's verdict + sweep, one beat of reflection — did THIS task reveal something about how this DEV works (a preference, a recurring friction, a steering pattern)? Repo knowledge goes to the working set, never here. A genuine dev-level observation becomes its OWN opt-in offer (consent doctrine: insights are NEVER under session consent) → `put_dev_insight` on yes. No observation = no offer — silence is the honest default |
 
 ## Procedure
 
@@ -26,6 +27,11 @@ platform MCP (one read path — the same surface any third-party agent uses).
    (envelope `brainForSha` vs local stamp → prompt `rafa push` if behind). MCP
    recall is automatic throughout — SOP-driven, never dev-invoked; a repo without
    the `rafinery` MCP connected falls back to local `.rafa/` file reads.
+   **On a feature branch, pass `branch: <current git branch>` to
+   search_knowledge/get_rule/get_playbook/get_improvement** — recall then
+   overlays the branch's live working set on canon, every non-canonical result
+   tier-labeled (the alert rule: a `source: {tier: "candidate"}` or
+   `branchOverlay` is branch state, not org truth — say so when you rely on it).
    **Session consent (asked ONCE, verbs ENUMERATED):** *"keep the platform
    updated as I work? That means exactly: (1) plan status + Log pushes on
    cadence, (2) checkpointing this branch's working set (edited/new brain
@@ -33,7 +39,10 @@ platform MCP (one read path — the same surface any third-party agent uses).
    anytime ("stop pushing"). On "no": journal locally only, push at the end on
    approval. Dev-level insights are NEVER under this consent — each is its own
    offer.
-2. **Per task:** atlas recalls → implements → prism validates vs `## Done-check` →
+2. **Per task:** atlas recalls → implements → **commits use the
+   [rafa-commit](../rafa-commit/SKILL.md) format — `[<task-id>] <type>:
+   <subject>` (the id join-key; intent records + the branch manifest lift it
+   into per-note provenance)** → prism validates vs `## Done-check` →
    bloom sweeps (push new / close fixed / nudge) → update the child file's `status`
    **and append a dated entry to the child's `## Log`** (body links: markdown,
    per [rafa-okf](../rafa-okf/SKILL.md)) — what was done, what was
@@ -69,14 +78,28 @@ platform MCP (one read path — the same surface any third-party agent uses).
    - **On any other branch:** the org brain is NEVER written from a branch —
      it describes main, and a branch-state scan would poison it for everyone.
      Invalidated/learned knowledge → the branch **working set**: hydrate the
-     affected note (`rafa hydrate <rule|playbook> <id>`) and edit it, or author
-     a new note file under `.rafa/brain/**` — `rafa checkpoint` syncs it. It
+     affected note (`rafa hydrate <rule|playbook|improvement> <id>`) and edit
+     it, or author a new note file under `.rafa/brain/**` — `rafa checkpoint`
+     syncs it. Ledger status edits (bloom's `fixed`) ALWAYS hydrate first. It
      enters the org brain at merge-to-main, through distillation. This is the
      knowledge-propagates-like-code rule, enforced.
    The working-set files ARE the sanctioned branch authoring surface — what is
    never allowed is editing main's brain around the scan/compile/push gates.
-4. **Verify** (prism-style) before declaring the plan done; final `push_plan` +
-   `set_active_plan` (clear) + `rafa checkpoint`. A plan that stops being worth
+   **Gap close-out:** authored knowledge that answers an in-scope knowledge
+   gap (adopted at plan time via `get_knowledge_gaps`) closes the loop —
+   `set_gap_status(q, "closed")` at the same beat the note is authored.
+4. **Verify** (prism-style) before declaring the plan done — including the
+   [rafa-review](../rafa-review/SKILL.md) gate: `rafa review` scopes the exact
+   rules/improvements the branch's diff touches; the judge rules on that list
+   + each Done-check, emits `review-verdict`; final `push_plan` +
+   `set_active_plan` (clear) + `rafa checkpoint`. **Dual status (single/double
+   tick):** `status: done` is the dev ✓ — prism-earned, session-set, for
+   leaves AND the epic (the epic's ✓ = every leaf verified done). DELIVERY is
+   the separate ✓✓: the platform stamps `merged` per item when the branch
+   merges to main (the reconciliation is the receipt; sessions can never
+   write it; intermediate merges re-point the plan to the target branch so
+   stacked branches converge). The board shows "awaiting merge" between ✓ and
+   ✓✓. A plan that stops being worth
    finishing closes honestly: `superseded` or `abandoned`, never fake-`done`.
    Plan-done is also a **staleness boundary**: read `rafa dirty --json` — if the
    build's edits dirtied notes this session didn't already refresh, surface the
