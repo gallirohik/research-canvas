@@ -199,7 +199,7 @@ export function ResearchCanvas() {
           />
         </div>
 
-        {state.citations.length > 0 && (
+        {state.citations && state.citations.length > 0 && (
           <div>
             <h2 className="text-lg font-medium mb-3 text-primary">Fact Check</h2>
             <FactCheck citations={state.citations} />

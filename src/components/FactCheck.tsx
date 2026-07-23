@@ -40,7 +40,7 @@ export function FactCheck({ citations }: { citations: Citation[] }) {
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline text-slate-400"
+                      className="text-xs text-slate-400 hover:underline"
                       title={url}
                     >
                       {truncateUrl(url)}
