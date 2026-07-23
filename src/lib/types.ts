@@ -11,11 +11,16 @@ export interface Citation {
   note?: string | null;
 }
 
+export type Log = {
+  message: string;
+  done: boolean;
+};
+
 export type AgentState = {
   model: string;
   research_question: string;
   report: string;
-  resources: any[];
-  logs: any[];
+  resources: Resource[];
+  logs: Log[];
   citations: Citation[];
 };
