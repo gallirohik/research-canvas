@@ -26,11 +26,25 @@ try {
   if (process.env.RAFA_HOOKS_DISABLED === "1") process.exit(0);
   if (process.argv[4] !== "1") process.exit(0);
   if (!existsSync(join(ROOT, "rafa.json"))) process.exit(0);
-  if (!existsSync(join(ROOT, ".rafa", ".git"))) process.exit(0);
 
   const sh = (cmd, cwd = ROOT, timeout) =>
     execSync(cmd, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], ...(timeout ? { timeout } : {}) }).trim();
   const shR = (cmd, timeout) => sh(cmd, join(ROOT, ".rafa"), timeout);
+
+  // SELF-HEAL (owner 2026-07-23): a repo with rafa.json but no materialized .rafa
+  // instance must still mirror — "clone → just works" means the FIRST branch checkout
+  // bootstraps the lazy .rafa itself (same npx precedent as the pre-push checkpoint
+  // hook), bounded so a checkout can never hang. A bootstrap failure degrades to the
+  // old silent no-op — a checkout must never break.
+  if (!existsSync(join(ROOT, ".rafa", ".git"))) {
+    try {
+      console.error("rafa · no local .rafa instance — bootstrapping (one-time) …");
+      sh("npx -y @rafinery/cli pull", ROOT, 90000);
+    } catch {
+      process.exit(0);
+    }
+    if (!existsSync(join(ROOT, ".rafa", ".git"))) process.exit(0);
+  }
 
   const branch = sh("git rev-parse --abbrev-ref HEAD");
   if (branch === "HEAD") process.exit(0); // detached — no mirror
