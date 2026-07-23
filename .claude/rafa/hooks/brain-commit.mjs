@@ -105,6 +105,19 @@ try {
     /* not a merge / rev-list unavailable — normal 1-1 path */
   }
 
+  // The BRANCH MANIFEST (harness-arc wave 1, manifest-as-handoff): every brain
+  // commit carries a lenient snapshot of the branch's knowledge state, so the
+  // reconciler (or any agent) reads "what this branch believes" at any ref.
+  // Delegated to the CLI (`rafa manifest` — okf-parsed, never a second parser);
+  // best-effort + bounded: a missing/slow CLI must never block a code commit.
+  try {
+    const localRafa = join(ROOT, "node_modules", ".bin", "rafa");
+    const runner = existsSync(localRafa) ? `"${localRafa}"` : "npx -y @rafinery/cli";
+    sh(`${runner} manifest`, ROOT, 30000);
+  } catch {
+    /* snapshot skipped — the reconciler treats a stale/absent branch manifest as null */
+  }
+
   // The intent record — the commit's end-to-end intent, mechanically joined.
   // Minimal here (sha · subject · files); the P3 capture worker enriches.
   const fullSha = sh("git rev-parse HEAD");

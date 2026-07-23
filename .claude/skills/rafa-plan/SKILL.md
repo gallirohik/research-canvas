@@ -25,7 +25,16 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
   knowledge, just unserved.*
 - **bloom pulls** — `list_improvements` in the blast radius; surface the
   top-leverage open items as optional *"while-you're-here"* child tasks
-  (leverage-ranked, dismissible, never blocking).
+  (leverage-ranked, dismissible, never blocking). **Any improvement the plan
+  ADOPTS (as a task or the plan's very subject) is hydrated NOW** —
+  `rafa hydrate improvement <id>` — so the canonical ledger file is in the
+  branch working set from the start and the eventual `status: fixed` edit lands
+  on that same file, never a path-drifted twin authored at build's end.
+  **Also pull `get_knowledge_gaps`** (the open backlog — what devs asked that
+  the brain couldn't serve): a top-missed gap inside the blast radius is live
+  demand — offer it as a while-you're-here task; on adoption call
+  `set_gap_status(q, "in-scope")` (and `out-of-scope` with a one-line note is
+  an honest dismissal — silence is not).
 - **prism validates the plan itself** — before the approval gate: is every task
   grounded in real brain/code (not hallucinated ground)? does every child carry a
   `## Done-check` (the expected outcome prism will validate execution against)?
@@ -54,7 +63,11 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
 5. **prism plan-validation** → REJECT/fix loop until clean.
 6. **Approval gate** (owner). Then materialize `plans/<plan>/*.md` per contract §7
    (plan files ride the OKF surface — markdown links in bodies; see [rafa-okf](../rafa-okf/SKILL.md))
-   (parent + child-owned files, globally-unique prefixed ids) + `active.md` pointer
+   (parent + child-owned files, globally-unique prefixed ids; **the EPIC's
+   frontmatter stamps `branch:` = the current git branch** — the platform
+   joins merge events on this field to stamp the delivery ✓✓ (`merged`) per
+   item, and re-points it through intermediate merges)
+   + `active.md` pointer
    → `rafa compile` (validate the files) → **`push_plan` + `set_active_plan`
    immediately, no second prompt — plan approval IS the push trigger** (the
    dedicated plans channel; plans never ride the brain manifest). The dev just

@@ -33,7 +33,10 @@ platform MCP (one read path — the same surface any third-party agent uses).
    anytime ("stop pushing"). On "no": journal locally only, push at the end on
    approval. Dev-level insights are NEVER under this consent — each is its own
    offer.
-2. **Per task:** atlas recalls → implements → prism validates vs `## Done-check` →
+2. **Per task:** atlas recalls → implements → **commits use the
+   [rafa-commit](../rafa-commit/SKILL.md) format — `[<task-id>] <type>:
+   <subject>` (the id join-key; intent records + the branch manifest lift it
+   into per-note provenance)** → prism validates vs `## Done-check` →
    bloom sweeps (push new / close fixed / nudge) → update the child file's `status`
    **and append a dated entry to the child's `## Log`** (body links: markdown,
    per [rafa-okf](../rafa-okf/SKILL.md)) — what was done, what was
@@ -69,14 +72,25 @@ platform MCP (one read path — the same surface any third-party agent uses).
    - **On any other branch:** the org brain is NEVER written from a branch —
      it describes main, and a branch-state scan would poison it for everyone.
      Invalidated/learned knowledge → the branch **working set**: hydrate the
-     affected note (`rafa hydrate <rule|playbook> <id>`) and edit it, or author
-     a new note file under `.rafa/brain/**` — `rafa checkpoint` syncs it. It
+     affected note (`rafa hydrate <rule|playbook|improvement> <id>`) and edit
+     it, or author a new note file under `.rafa/brain/**` — `rafa checkpoint`
+     syncs it. Ledger status edits (bloom's `fixed`) ALWAYS hydrate first. It
      enters the org brain at merge-to-main, through distillation. This is the
      knowledge-propagates-like-code rule, enforced.
    The working-set files ARE the sanctioned branch authoring surface — what is
    never allowed is editing main's brain around the scan/compile/push gates.
+   **Gap close-out:** authored knowledge that answers an in-scope knowledge
+   gap (adopted at plan time via `get_knowledge_gaps`) closes the loop —
+   `set_gap_status(q, "closed")` at the same beat the note is authored.
 4. **Verify** (prism-style) before declaring the plan done; final `push_plan` +
-   `set_active_plan` (clear) + `rafa checkpoint`. A plan that stops being worth
+   `set_active_plan` (clear) + `rafa checkpoint`. **Dual status (single/double
+   tick):** `status: done` is the dev ✓ — prism-earned, session-set, for
+   leaves AND the epic (the epic's ✓ = every leaf verified done). DELIVERY is
+   the separate ✓✓: the platform stamps `merged` per item when the branch
+   merges to main (the reconciliation is the receipt; sessions can never
+   write it; intermediate merges re-point the plan to the target branch so
+   stacked branches converge). The board shows "awaiting merge" between ✓ and
+   ✓✓. A plan that stops being worth
    finishing closes honestly: `superseded` or `abandoned`, never fake-`done`.
    Plan-done is also a **staleness boundary**: read `rafa dirty --json` — if the
    build's edits dirtied notes this session didn't already refresh, surface the
