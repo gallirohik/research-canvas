@@ -9,6 +9,7 @@ import {
   useCopilotAction,
 } from "@copilotkit/react-core";
 import { Progress } from "./Progress";
+import { FactCheck } from "./FactCheck";
 import { EditResourceDialog } from "./EditResourceDialog";
 import { AddResourceDialog } from "./AddResourceDialog";
 import { Resources } from "./Resources";
@@ -197,6 +198,13 @@ export function ResearchCanvas() {
             style={{ minHeight: "200px" }}
           />
         </div>
+
+        {state.citations.length > 0 && (
+          <div>
+            <h2 className="text-lg font-medium mb-3 text-primary">Fact Check</h2>
+            <FactCheck citations={state.citations} />
+          </div>
+        )}
       </div>
     </div>
   );
