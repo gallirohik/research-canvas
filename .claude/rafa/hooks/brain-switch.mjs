@@ -4,15 +4,16 @@
 // surfaces are committed to the OLD branch first (switch-carryover) —
 // deterministic, nothing lost, nothing blocks.
 //
-// FRESH-SLATE RULE (owner 2026-07-23): a NEW branch's mirror is cut FROM THE
-// REMOTE TRUNK (the published org brain), never from whatever branch the local
-// mirror happened to sit on. That makes the slate exact — no session leftovers
-// from other branches, no local-vs-remote drift — and keeps the branch's diff
-// vs trunk equal to precisely what the branch captures (the reconciler's
-// git-plane semantic). Cutting an EMPTY tree instead would read as mass
-// deletion of the org brain in that diff — never that.
+// EMPTY-SLATE RULE (owner 2026-07-23): a NEW branch's mirror is cut at the
+// trunk's ROOT COMMIT — the empty genesis base every brain trunk begins with —
+// so the branch starts with an EMPTY .rafa and code agents HYDRATE what they
+// need during development. Rooting at genesis (not an orphan) keeps ancestry
+// with main, so the reconciler's main...branch diff = exactly what the branch
+// captured (an unrooted empty branch would diff as mass deletion of the org
+// brain — never that). The new mirror branch is also PUSHED to the brain
+// remote (best-effort, bounded) so the branch is VISIBLE in the brain repo.
 // Fallback ladder (offline-safe, never blocks a checkout):
-//   origin/<trunk> (freshly fetched, bounded) → local <trunk> → current HEAD.
+//   root of origin/<trunk> (freshly fetched) → root of local <trunk> → current HEAD.
 //
 // argv: <prevHEAD> <newHEAD> <flag> (git's post-checkout contract;
 // flag "1" = branch checkout, "0" = file checkout → no-op).
@@ -104,7 +105,8 @@ try {
     }
   } catch {
     // CUT — no mirror branch yet. Never mirror-cut the trunk itself; for any other
-    // branch, base the new mirror on the freshest trunk we can reach.
+    // branch, base the new mirror at the ROOT of the freshest trunk we can reach —
+    // the empty genesis base ⇒ an EMPTY .rafa slate, hydrated on demand during dev.
     if (branch !== "main" && branch !== "master") {
       const trunk = trunkOf();
       let base = null;
@@ -113,7 +115,9 @@ try {
         for (const ref of [`refs/remotes/origin/${trunk}`, `refs/heads/${trunk}`]) {
           try {
             shR(`git rev-parse --verify -q "${ref}"`);
-            base = ref;
+            // The trunk-line root (first-parent chain has exactly one root) — the
+            // empty genesis commit the reconciler authors the org brain from.
+            base = shR(`git rev-list --max-parents=0 --first-parent "${ref}"`).split("\n").pop();
             break;
           } catch {
             /* next */
@@ -122,6 +126,14 @@ try {
       }
       if (base) shR(`git checkout -q -b "${branch}" "${base}"`);
       else shR(`git checkout -q -b "${branch}"`); // last resort: old behavior, current HEAD
+      // Make the branch VISIBLE in the brain repo (owner 2026-07-23) — best-effort,
+      // bounded; a push failure never blocks the checkout (remote lands on the next
+      // brain-commit push instead).
+      try {
+        shR(`git push -q -u origin "${branch}"`, 10000);
+      } catch {
+        /* offline / no permission — mirror stays local until a later push succeeds */
+      }
     }
   }
 } catch {
