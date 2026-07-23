@@ -19,6 +19,7 @@ platform MCP (one read path — the same surface any third-party agent uses).
 | **Executor** | atlas | RECALL the task's brain slice via MCP (`search_knowledge` + `get_rule`/`get_playbook`; honor non-exemplars) → implement, convention-adherent |
 | **Validator** | prism | validate the execution against the child's `## Done-check` — strict, unbiased, against code + brain, never against atlas's claims. **`status: done` only on prism PASS**; FAIL → atlas corrects (validate-and-correct at work time). Plan-done adds one line to the verdict: **working set reviewed — captured, or clean-with-reason** (a build that learned nothing SAYS so; a build that learned something SHOWS the files) |
 | **Improver** | bloom | **push**: new improvement opportunities spotted during execution → new ledger files. **close**: improvements fixed in passing → `status: fixed` in the ledger file + `report_improvement_status(id, fixed)` so the platform shows it LIVE as pending-reconciliation (the ledger row itself changes only at the next brain push — K1). **nudge**: top-leverage open item in the task's blast radius — opt-in, never blocking |
+| **Coach** | compass | **sitback** (harness-arc): after each task's verdict + sweep, one beat of reflection — did THIS task reveal something about how this DEV works (a preference, a recurring friction, a steering pattern)? Repo knowledge goes to the working set, never here. A genuine dev-level observation becomes its OWN opt-in offer (consent doctrine: insights are NEVER under session consent) → `put_dev_insight` on yes. No observation = no offer — silence is the honest default |
 
 ## Procedure
 
@@ -26,6 +27,11 @@ platform MCP (one read path — the same surface any third-party agent uses).
    (envelope `brainForSha` vs local stamp → prompt `rafa push` if behind). MCP
    recall is automatic throughout — SOP-driven, never dev-invoked; a repo without
    the `rafinery` MCP connected falls back to local `.rafa/` file reads.
+   **On a feature branch, pass `branch: <current git branch>` to
+   search_knowledge/get_rule/get_playbook/get_improvement** — recall then
+   overlays the branch's live working set on canon, every non-canonical result
+   tier-labeled (the alert rule: a `source: {tier: "candidate"}` or
+   `branchOverlay` is branch state, not org truth — say so when you rely on it).
    **Session consent (asked ONCE, verbs ENUMERATED):** *"keep the platform
    updated as I work? That means exactly: (1) plan status + Log pushes on
    cadence, (2) checkpointing this branch's working set (edited/new brain
@@ -82,7 +88,10 @@ platform MCP (one read path — the same surface any third-party agent uses).
    **Gap close-out:** authored knowledge that answers an in-scope knowledge
    gap (adopted at plan time via `get_knowledge_gaps`) closes the loop —
    `set_gap_status(q, "closed")` at the same beat the note is authored.
-4. **Verify** (prism-style) before declaring the plan done; final `push_plan` +
+4. **Verify** (prism-style) before declaring the plan done — including the
+   [rafa-review](../rafa-review/SKILL.md) gate: `rafa review` scopes the exact
+   rules/improvements the branch's diff touches; the judge rules on that list
+   + each Done-check, emits `review-verdict`; final `push_plan` +
    `set_active_plan` (clear) + `rafa checkpoint`. **Dual status (single/double
    tick):** `status: done` is the dev ✓ — prism-earned, session-set, for
    leaves AND the epic (the epic's ✓ = every leaf verified done). DELIVERY is

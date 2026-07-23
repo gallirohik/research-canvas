@@ -46,7 +46,14 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
 1. **Staleness check** — compare the platform envelope's `brainForSha` against the
    local brain stamp; if the platform is behind, surface "run `rafa push`" (never
    proceed silently on knowledge you know is stale — never block either).
-2. **Recall** (atlas, via MCP) → **decompose** into the WORK-ITEM TREE (contract
+2. **Recall** (atlas, via MCP) — `get_coverage` now carries **`recentDeltas`**
+   (the last trunk merges' knowledge changes + which plan delivered each):
+   open the plan draft with a TWO-LINE BRIEFING of what changed in the blast
+   radius since it was last touched — planning starts from the deltas, never a
+   stale mental model. `search_knowledge` may return a **`decisions`** block
+   (prior recorded calls matching the query): read it BEFORE re-litigating a
+   settled decision — reopening one is the owner's move, not the plan's.
+   Then **decompose** into the WORK-ITEM TREE (contract
    §7 v2): one epic → tasks → subtasks (three ranks, never deeper). Every item
    carries the glimpse fields — `title` (what) · `description` (why) ·
    `approach` (how, one line) · `assignee` when known · `blocked_by` for

@@ -142,6 +142,33 @@ try {
       `\n`,
   );
 
+  // Local-state exclusion (owner 2026-07-24): the hydration sidecar + sensor
+  // queues are MACHINE state, never knowledge — ensure the ignore entries and
+  // UNTRACK anything an earlier CLI's window let git track (a .gitignore entry
+  // alone never untracks; `git add -A` would keep committing it forever).
+  // Best-effort: exclusion must never block a code commit.
+  try {
+    const LOCAL_STATE = [
+      "hydration.json",
+      "dirty.jsonl",
+      "reflex.jsonl",
+      "sensor-errors.jsonl",
+      "distill-verdicts.json",
+      "benchmark.demo.json",
+    ];
+    const gi = join(rafa, ".gitignore");
+    const cur = existsSync(gi) ? readFileSync(gi, "utf8") : "";
+    const have = new Set(cur.split("\n").map((l) => l.trim()).filter(Boolean));
+    const missing = [...LOCAL_STATE, "*.theirs.md", "distill-incoming/"].filter((l) => !have.has(l));
+    if (missing.length)
+      writeFileSync(gi, cur + (cur === "" || cur.endsWith("\n") ? "" : "\n") + missing.join("\n") + "\n");
+    for (const p of LOCAL_STATE) shR(`git rm -q --cached --ignore-unmatch "${p}"`);
+    shR('git rm -q -r --cached --ignore-unmatch distill-incoming');
+    shR('git rm -q --cached --ignore-unmatch "*.theirs.md"');
+  } catch {
+    /* exclusion is best-effort */
+  }
+
   shR("git add -A");
   disposeHydrations(branch);
   shR(
