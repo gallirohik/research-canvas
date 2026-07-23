@@ -46,6 +46,24 @@ export async function search_node(state: AgentState, config: RunnableConfig) {
   let resources = state["resources"] || [];
   let logs = state["logs"] || [];
 
+  // Guard 1: the incoming ai_message (the Search tool call from chat_node) may have
+  // no tool_calls. Indexing tool_calls![0] would throw at runtime. Nothing to search,
+  // and — since there is no tool_call here — nothing to resolve in the message history
+  // (mirrors the Python guard 1). Log, emit, and return early with no new messages.
+  if (!aiMessage.tool_calls?.length) {
+    logs.push({
+      message: "No search queries provided; skipping search.",
+      done: true,
+    });
+    const { messages: _messages, ...restOfStateForGuard } = state;
+    await copilotkitEmitState(config, {
+      ...restOfStateForGuard,
+      logs,
+      resources,
+    });
+    return { messages: [], resources, logs };
+  }
+
   const queries = aiMessage.tool_calls![0]["args"]["queries"];
 
   for (const query of queries) {
@@ -126,6 +144,39 @@ export async function search_node(state: AgentState, config: RunnableConfig) {
   );
 
   const aiMessageResponse = response as AIMessage;
+
+  // Guard 2: the forced ExtractResources extraction may come back with no tool_calls.
+  // Indexing tool_calls![0] would throw at runtime. Skip the resources.push and the
+  // happy-path returns — BUT the original Search tool_call (aiMessage.tool_calls[0].id,
+  // proven non-empty by guard 1 above) is normally resolved by searchResultsToolMessage
+  // on the happy path. If we return without appending a ToolMessage that resolves it,
+  // the AIMessage's tool_call is left dangling, and the next chat_node re-invoke
+  // (search_node -> download -> chat_node) 400s the provider ("tool_calls must be
+  // followed by tool result messages"). This mirrors the Python search-guard-py fix:
+  // its first pass FAILED prism for exactly this dangling-tool_call bug.
+  if (!aiMessageResponse.tool_calls?.length) {
+    logs.push({
+      message: "No resources extracted from search results.",
+      done: true,
+    });
+    await copilotkitEmitState(config, {
+      ...restOfState,
+      resources,
+      logs,
+    });
+    return {
+      messages: [
+        new ToolMessage({
+          tool_call_id: aiMessage.tool_calls![0]["id"]!,
+          content: `No resources extracted from search results.`,
+          name: "Search",
+        }),
+      ],
+      resources,
+      logs,
+    };
+  }
+
   const newResources = aiMessageResponse.tool_calls![0]["args"]["resources"];
 
   resources.push(...newResources);

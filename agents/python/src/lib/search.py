@@ -63,6 +63,14 @@ async def search_node(state: AgentState, config: RunnableConfig):
 
     state["resources"] = state.get("resources", [])
     state["logs"] = state.get("logs", [])
+
+    if not ai_message.tool_calls:
+        state["logs"].append(
+            {"message": "No search queries provided; skipping search.", "done": True}
+        )
+        await copilotkit_emit_state(config, state)
+        return state
+
     queries = ai_message.tool_calls[0]["args"]["queries"]
 
     logs_offset = len(state["logs"])
@@ -127,6 +135,20 @@ async def search_node(state: AgentState, config: RunnableConfig):
     await copilotkit_emit_state(config, state)
 
     ai_message_response = cast(AIMessage, response)
+
+    if not ai_message_response.tool_calls:
+        state["logs"].append(
+            {"message": "No resources extracted from search results.", "done": True}
+        )
+        state["messages"].append(
+            ToolMessage(
+                tool_call_id=ai_message.tool_calls[0]["id"],
+                content="No resources extracted from search results.",
+            )
+        )
+        await copilotkit_emit_state(config, state)
+        return state
+
     resources = ai_message_response.tool_calls[0]["args"]["resources"]
 
     state["resources"].extend(resources)
