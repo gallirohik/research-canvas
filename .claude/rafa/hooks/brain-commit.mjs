@@ -17,10 +17,10 @@ try {
   if (!existsSync(join(ROOT, "rafa.json"))) process.exit(0);
   if (!existsSync(join(ROOT, ".rafa", ".git"))) process.exit(0);
 
-  const sh = (cmd, cwd = ROOT) =>
-    execSync(cmd, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  const sh = (cmd, cwd = ROOT, timeout) =>
+    execSync(cmd, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], ...(timeout ? { timeout } : {}) }).trim();
   const rafa = join(ROOT, ".rafa");
-  const shR = (cmd) => sh(cmd, rafa);
+  const shR = (cmd, timeout) => sh(cmd, rafa, timeout);
 
   // DISPOSAL (MIRRORS working-set.isDisposableHydration — the ONE rule, both planes):
   // an UNEDITED hydration must never enter a brain commit, or we re-push org content as a
@@ -135,6 +135,16 @@ try {
     `git commit --allow-empty -q -m "brain(${branch}): ${subject}" ` +
       `-m "code-commit: ${fullSha}" -m "code-branch: ${branch}"`,
   );
+  // Keep the REMOTE mirror branch current (owner 2026-07-23: the branch is visible
+  // in the brain repo) — best-effort, bounded; a failed push retries on the next
+  // commit. Never the trunk (single writer = the reconciler).
+  if (branch !== "main" && branch !== "master") {
+    try {
+      shR(`git push -q -u origin "${branch}"`, 10000);
+    } catch {
+      /* offline / no permission — stays local until a later push succeeds */
+    }
+  }
 } catch {
   /* silent by design — the heartbeat carries sensor health */
 }
