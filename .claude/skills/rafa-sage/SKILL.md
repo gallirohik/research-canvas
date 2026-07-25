@@ -58,8 +58,14 @@ boundary; its product is a ledger reviewed *later*, never a live nudge. No mid-f
 ### 2. evidence-cited — SHAPES only, via `get_loop_events`
 Every learning cites its evidence, and evidence is **loop-event shapes and categories only**:
 verdict TYPES, gap CLASSES, miss TAXONOMIES, and the aggregate counts/rates over them — read via
-`get_loop_events` (category ∈ `prism-verdict | gate-result | reflex-outcome | distill-refutation`;
-outcome enum per category; `subject` is a shape reference, never content). A learning with no
+`get_loop_events` (category ∈ `prism-verdict | gate-result | reflex-outcome | distill-refutation |
+review-verdict`; outcome enum per category; `subject` is a shape reference, never content). Wave 5
+enriched every event with THREE new analysis dimensions — split every rate by them: **verification
+method** (`static` vs `live` — a PASS-rate that holds only on static rulings is a coverage gap, not
+health), **actor envelope** (model · agent@version · runner — attribute a miss class to the agent
+structure that produced it), and **tier** (`light|standard|full` — audit the tiering itself: a
+light-tier task class that later produced escaped bugs is evidence the planner's tier rule needs a
+diff; a full-tier class whose findings-density is ~zero is evidence of ceremony). A learning with no
 event-shape evidence is a hunch — drop it. sage never cites a customer artifact (no `file:line`
 into customer code; that field does not exist in the schema below).
 
@@ -101,7 +107,9 @@ human.
 The ledger is a **committed, human-reviewed governance artifact** — diffs for MR review. It is
 **NOT** a Convex table and **NOT** inside any customer `.rafa/brain/` (asset-free: learnings are
 about OUR agents; they never mix with customer knowledge). It lives beside the contract at
-`.claude/rafa/learnings/` (governance, versioned with the blueprint, MR-reviewed):
+`.claude/rafa/learnings/` (governance, versioned with the blueprint, MR-reviewed). The platform's
+"agent learnings" card renders a **projection** of it (summary rows via `report_learning`, wave
+4.1, owner-ratified 2026-07-24) — a display overlay, never a second truth and never the store:
 
 - `learnings/<id>.md` — one file per learning (one proposed card/SOP diff, cited to event shapes).
 - `ledger.md` — generated index: counts by category / target / status, and the top-leverage few.
@@ -169,7 +177,16 @@ enforced by sage and by MR review.
 7. **Ledger + leverage.** Regenerate `ledger.md`: counts by category / target / status, and the
    **top-leverage few** (impact × ease) — the single card/SOP change that would cover the widest
    class of misses, first.
-8. **Present, don't nag, don't apply.** Surface the top few high-leverage learnings succinctly as
+8. **Mirror the summary rows (wave 4.1 — the platform "agent learnings" card).** For each entry
+   written or status-changed in step 6, call `report_learning` with the entry's SUMMARY fields
+   (`id · pattern · categories · evidence_shape · proposed_diff_target · proposed_change ·
+   status · leverage`) — AFTER the scrub step and the file write, never before. This is a
+   **projection, not a second truth** (owner 2026-07-24): the committed `.md` stays the single
+   truth; the rows only render the Activity card. Upsert by id — re-runs refresh `status`,
+   never duplicate. The server re-screens every field (enum checks, `.claude/`-only target,
+   length caps, code-fence/secret rejection) — a rejection means the entry failed the asset-free
+   gate: fix the ENTRY, don't re-word past the screen.
+9. **Present, don't nag, don't apply.** Surface the top few high-leverage learnings succinctly as
    PROPOSALS. sage never applies a diff; a human reviews the ledger, and any accepted change lands
    as a versioned, MR-reviewed card/SOP edit (bump `version:`, record the why). Silent otherwise.
 

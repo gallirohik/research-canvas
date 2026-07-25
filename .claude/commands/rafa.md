@@ -1,5 +1,5 @@
 ---
-version: 2.0.2
+version: 2.2.0
 description: rafa — the repo's engineering SOP. Use whenever the dev wants to plan a feature or change, build/execute against the active plan, improve code health, or ground work in the repo's brain — intent counts, the dev does NOT need to type /rafa. Also explicit: /rafa <init|scan|improve|plan|build|push|leverage|migrate|update|help> [--brain-only]. Admin verbs (init/scan/push/migrate/update) run ONLY when explicitly invoked.
 ---
 
@@ -59,10 +59,15 @@ MCP tools, checkpoints, pushes, decisions logging — is AGENT-INTERNAL machiner
 dev speaks intent; YOU run the machinery. Never instruct the dev to run a command you
 can run yourself. The only human acts: init (provision) · `npx rafa pull` (once per
 clone) · ci-setup approval · npm publish. **Toolbox is a recall surface:** at bootstrap,
-load the committed toolbox (`.claude/skills/`, `.mcp.json`, commands) alongside brain
-status; pass the matching slice into every atlas/bloom spawn prompt — agents USE the fit
-capability instead of hand-rolling (only what's installed, never guessed; personal
-`~/.claude/` stays live-recommend-only). **Actor envelope:** stamp `actorMeta {model,
+load the committed toolbox — `.claude/skills/` (this harness) **and
+`.agents/skills/` (the HARNESS-NEUTRAL third-party skills — one convention
+Claude Code · Codex · Cursor all read; installed by `rafa update` with
+consent, wave 6)** — plus `.mcp.json` and commands, alongside brain status
+(`rafa leverage --json` is the deterministic read); pass the matching slice
+into every atlas/bloom spawn prompt — agents USE the fit capability instead of
+hand-rolling (only what's installed, never guessed; a DECLINED skill dep means
+the SOP's fallback path, never a nag; personal `~/.claude/` stays
+live-recommend-only). **Actor envelope:** stamp `actorMeta {model,
 agent, runner: "session"}` on every state-plane write (checkpoints, plan pushes,
 decisions, reports) and export `RAFA_ACTOR_MODEL` before CLI calls — the platform records
 WHO/WHAT executed; "unreported" when unknown, never guessed.
@@ -240,14 +245,20 @@ explicitly typed; an ACCEPTED boundary offer counts as the explicit invocation.
 
 ## sage — the silent L5 observer (runs IMPLICITLY, zero-command; owner 2026-07-13)
 
-Devs never type `/rafa sage`. **Trigger:** at completion boundaries — build final-verify ·
-distill close · bootstrap — when new loop events exist since the learnings ledger's newest
-entry, spawn sage per [rafa-sage](../skills/rafa-sage/SKILL.md); announce ONE line, proceed;
-its proposals ride the NEXT bootstrap digest. Writing proposals is the just-do rung; the
-consent moment is ACCEPTING one (accepted = a versioned, MR-reviewed card/SOP edit — proposals
-never self-apply). `/rafa sage` is the explicit override. Full mechanics (≥10-event threshold,
-`get_loop_events` shape read, scrub step, ledger schema, the person-free/asset-free creed) live
-in the skill.
+Devs never type `/rafa sage`. **Trigger — MECHANICAL as of wave 5 (owner
+2026-07-25):** the SessionStart digest computes it — a `[rafa · sage] sage due:
+N loop events…` line (the checkpoint-written loop-event cache vs the learnings
+ledger, compared locally). **When that line is present, spawning sage at the
+next completion boundary — build final-verify · distill close · bootstrap — is
+a MUST, not a judgment call**: the line IS the trigger condition already
+evaluated; a discretionary trigger is how sage never fired organically. Spawn
+per [rafa-sage](../skills/rafa-sage/SKILL.md); announce ONE line, proceed; its
+proposals ride the NEXT bootstrap digest. No digest line = not due (skip
+silently). Writing proposals is the just-do rung; the consent moment is
+ACCEPTING one (accepted = a versioned, MR-reviewed card/SOP edit — proposals
+never self-apply). `/rafa sage` is the explicit override. Full mechanics
+(≥10-event threshold, `get_loop_events` shape read, scrub step, ledger schema,
+the person-free/asset-free creed) live in the skill.
 
 ## migrate · update — brain-side schema migration (no skill; the intelligence-only half)
 

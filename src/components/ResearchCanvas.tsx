@@ -9,10 +9,11 @@ import {
   useCopilotAction,
 } from "@copilotkit/react-core";
 import { Progress } from "./Progress";
+import { FactCheck } from "./FactCheck";
 import { EditResourceDialog } from "./EditResourceDialog";
 import { AddResourceDialog } from "./AddResourceDialog";
 import { Resources } from "./Resources";
-import { AgentState, Resource } from "@/lib/types";
+import { AgentState, Resource, createInitialAgentState } from "@/lib/types";
 import { useModelSelectorContext } from "@/lib/model-selector-provider";
 
 export function ResearchCanvas() {
@@ -20,9 +21,7 @@ export function ResearchCanvas() {
 
   const { state, setState } = useCoAgent<AgentState>({
     name: agent,
-    initialState: {
-      model,
-    },
+    initialState: createInitialAgentState(model),
   });
 
   useCoAgentStateRender({
@@ -199,6 +198,13 @@ export function ResearchCanvas() {
             style={{ minHeight: "200px" }}
           />
         </div>
+
+        {state.citations && state.citations.length > 0 && (
+          <div>
+            <h2 className="text-lg font-medium mb-3 text-primary">Fact Check</h2>
+            <FactCheck citations={state.citations} />
+          </div>
+        )}
       </div>
     </div>
   );

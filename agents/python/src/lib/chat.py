@@ -33,9 +33,14 @@ def DeleteResources(urls: List[str]):  # pylint: disable=invalid-name,unused-arg
     """Delete the URLs from the resources."""
 
 
+@tool
+def FactCheckReport():  # pylint: disable=invalid-name,unused-argument
+    """Fact-check the current report against the available resources and flag any unsupported claims."""
+
+
 async def chat_node(
     state: AgentState, config: RunnableConfig
-) -> Command[Literal["search_node", "chat_node", "delete_node", "__end__"]]:
+) -> Command[Literal["search_node", "chat_node", "delete_node", "fact_check_node", "__end__"]]:
     """
     Chat Node
     """
@@ -80,6 +85,7 @@ async def chat_node(
             WriteReport,
             WriteResearchQuestion,
             DeleteResources,
+            FactCheckReport,
         ],
         **ainvoke_kwargs,  # Pass the kwargs conditionally
     ).ainvoke(
@@ -150,5 +156,9 @@ async def chat_node(
         ai_message.tool_calls and ai_message.tool_calls[0]["name"] == "DeleteResources"
     ):
         goto = "delete_node"
+    elif (
+        ai_message.tool_calls and ai_message.tool_calls[0]["name"] == "FactCheckReport"
+    ):
+        goto = "fact_check_node"
 
     return Command(goto=goto, update={"messages": response})

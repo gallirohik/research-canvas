@@ -5,8 +5,20 @@
   "brainRepo": "https://github.com/gallirohik/rafinary-brain",
   "provisionedFor": "user_3G3JKMFyEVMXIMfeiWgIQ2ihXw9",
   "rafa": {
-    "cli": "0.8.12",
+    "cli": "0.11.0",
     "contract": 1,
-    "plans": 2
+    "plans": 2,
+    "skills": {
+      "installed": {
+        "tdd": "1.0.0",
+        "frontend-design": "1.0.0",
+        "vercel-composition-patterns": "1.0.0",
+        "requesting-code-review": "1.0.0",
+        "improve-codebase-architecture": "1.0.0",
+        "grill-me": "1.0.0",
+        "grilling": "1.0.0"
+      },
+      "declined": []
+    }
   }
 }

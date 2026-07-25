@@ -10,6 +10,7 @@ from langgraph.graph import StateGraph
 from src.lib.chat import chat_node
 from src.lib.delete import delete_node, perform_delete_node
 from src.lib.download import download_node
+from src.lib.fact_check import fact_check_node
 from src.lib.search import search_node
 from src.lib.state import AgentState
 
@@ -20,12 +21,14 @@ workflow.add_node("chat_node", chat_node)
 workflow.add_node("search_node", search_node)
 workflow.add_node("delete_node", delete_node)
 workflow.add_node("perform_delete_node", perform_delete_node)
+workflow.add_node("fact_check_node", fact_check_node)
 
 
 workflow.set_entry_point("download")
 workflow.add_edge("download", "chat_node")
 workflow.add_edge("delete_node", "perform_delete_node")
 workflow.add_edge("perform_delete_node", "chat_node")
+workflow.add_edge("fact_check_node", "chat_node")
 workflow.add_edge("search_node", "download")
 
 # Conditionally use a checkpointer based on the environment

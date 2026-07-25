@@ -105,6 +105,19 @@ try {
     /* not a merge / rev-list unavailable — normal 1-1 path */
   }
 
+  // The BRANCH MANIFEST (harness-arc wave 1, manifest-as-handoff): every brain
+  // commit carries a lenient snapshot of the branch's knowledge state, so the
+  // reconciler (or any agent) reads "what this branch believes" at any ref.
+  // Delegated to the CLI (`rafa manifest` — okf-parsed, never a second parser);
+  // best-effort + bounded: a missing/slow CLI must never block a code commit.
+  try {
+    const localRafa = join(ROOT, "node_modules", ".bin", "rafa");
+    const runner = existsSync(localRafa) ? `"${localRafa}"` : "npx -y @rafinery/cli";
+    sh(`${runner} manifest`, ROOT, 30000);
+  } catch {
+    /* snapshot skipped — the reconciler treats a stale/absent branch manifest as null */
+  }
+
   // The intent record — the commit's end-to-end intent, mechanically joined.
   // Minimal here (sha · subject · files); the P3 capture worker enriches.
   const fullSha = sh("git rev-parse HEAD");
@@ -115,26 +128,99 @@ try {
     .split("\n")
     .filter(Boolean)
     .slice(0, 100);
+
+  // TAIL RUN detection (0.8.16, live-catch 2026-07-24): if HEAD already has its
+  // 1-1 mirror commit (its code-commit trailer is in the brain log), THIS
+  // invocation carries the SESSION TAIL — brain deltas written AFTER the last
+  // code commit (verify flips · late-authored notes · regenerated manifest)
+  // that would otherwise strand uncommitted until the next code commit. The
+  // checkpoint beat fires this worker for exactly that case. A tail commit is
+  // additive provenance on the SAME join key (trailer unchanged); its subject
+  // is distinct so the log never shows two look-alike mirrors, and an empty
+  // tail is a NO-OP — never an --allow-empty duplicate.
+  let isTail = false;
+  try {
+    isTail = shR(`git log --grep "code-commit: ${fullSha}" --format=%H -n 1`) !== "";
+  } catch {
+    /* fresh mirror / unborn HEAD — normal 1-1 path */
+  }
+
   mkdirSync(join(rafa, "intent"), { recursive: true });
-  writeFileSync(
-    join(rafa, "intent", `${short}.md`),
-    `---\n` +
-      `type: IntentRecord\n` +
-      `description: "per-commit intent trail (capture-engine P2) — provenance, consumed at merge, never org-brain truth"\n` +
-      `code-commit: ${fullSha}\n` +
-      `code-branch: ${branch}\n` +
-      `timestamp: ${new Date().toISOString()}\n` +
-      `---\n\n# ${subject}\n\n## Files\n` +
-      files.map((f) => `- ${f}`).join("\n") +
-      `\n`,
-  );
+  // A tail run never rewrites an existing intent record — the 1-1 mirror wrote
+  // it, and a fresh `timestamp:` would make every tail beat a phantom delta
+  // (the no-op contract would never hold).
+  const intentPath = join(rafa, "intent", `${short}.md`);
+  if (!isTail || !existsSync(intentPath)) {
+    writeFileSync(
+      intentPath,
+      `---\n` +
+        `type: IntentRecord\n` +
+        `description: "per-commit intent trail (capture-engine P2) — provenance, consumed at merge, never org-brain truth"\n` +
+        `code-commit: ${fullSha}\n` +
+        `code-branch: ${branch}\n` +
+        `timestamp: ${new Date().toISOString()}\n` +
+        `---\n\n# ${subject}\n\n## Files\n` +
+        files.map((f) => `- ${f}`).join("\n") +
+        `\n`,
+    );
+  }
+
+  // Local-state exclusion (owner 2026-07-24): the hydration sidecar + sensor
+  // queues are MACHINE state, never knowledge — ensure the ignore entries and
+  // UNTRACK anything an earlier CLI's window let git track (a .gitignore entry
+  // alone never untracks; `git add -A` would keep committing it forever).
+  // Best-effort: exclusion must never block a code commit.
+  try {
+    const LOCAL_STATE = [
+      "hydration.json",
+      "dirty.jsonl",
+      "reflex.jsonl",
+      "sensor-errors.jsonl",
+      "distill-verdicts.json",
+      "benchmark.demo.json",
+      // rafa review's scored-ranges artifact (wave 2.3) — regenerated per
+      // review, machine state like distill-verdicts; never brain knowledge.
+      "review.json",
+      // wave 5: session-scoped machine state — memoized verification + the
+      // checkpoint-written loop-event cache the sage-due digest reads.
+      "session-facts.json",
+      "loop-events-tail.json",
+    ];
+    const gi = join(rafa, ".gitignore");
+    const cur = existsSync(gi) ? readFileSync(gi, "utf8") : "";
+    const have = new Set(cur.split("\n").map((l) => l.trim()).filter(Boolean));
+    const missing = [...LOCAL_STATE, "*.theirs.md", "distill-incoming/"].filter((l) => !have.has(l));
+    if (missing.length)
+      writeFileSync(gi, cur + (cur === "" || cur.endsWith("\n") ? "" : "\n") + missing.join("\n") + "\n");
+    for (const p of LOCAL_STATE) shR(`git rm -q --cached --ignore-unmatch "${p}"`);
+    shR('git rm -q -r --cached --ignore-unmatch distill-incoming');
+    shR('git rm -q --cached --ignore-unmatch "*.theirs.md"');
+  } catch {
+    /* exclusion is best-effort */
+  }
 
   shR("git add -A");
   disposeHydrations(branch);
-  shR(
-    `git commit --allow-empty -q -m "brain(${branch}): ${subject}" ` +
-      `-m "code-commit: ${fullSha}" -m "code-branch: ${branch}"`,
-  );
+  if (isTail) {
+    // Session tail: commit only when something REAL is staged (disposal may
+    // have unstaged everything). The 1-1 join stays mechanical — same trailer.
+    let staged = [];
+    try {
+      staged = shR("git diff --cached --name-only").split("\n").filter(Boolean);
+    } catch {
+      /* nothing staged */
+    }
+    if (staged.length > 0)
+      shR(
+        `git commit -q -m "brain(${branch}): session tail · ${staged.length} file(s)" ` +
+          `-m "code-commit: ${fullSha}" -m "code-branch: ${branch}"`,
+      );
+  } else {
+    shR(
+      `git commit --allow-empty -q -m "brain(${branch}): ${subject}" ` +
+        `-m "code-commit: ${fullSha}" -m "code-branch: ${branch}"`,
+    );
+  }
   // Keep the REMOTE mirror branch current (owner 2026-07-23: the branch is visible
   // in the brain repo) — best-effort, bounded; a failed push retries on the next
   // commit. Never the trunk (single writer = the reconciler).

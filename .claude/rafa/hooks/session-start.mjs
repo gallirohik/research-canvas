@@ -300,6 +300,82 @@ try {
     }
   }
 
+  // Session facts (wave 5.4 — memoized verification): banked verified facts +
+  // mechanical staleness (dependsOn ∩ git diff since the verifying sha, working
+  // tree included). Spawned agents read the file FIRST and cite "SF-n unchanged"
+  // instead of re-deriving. Local reads only — no platform call.
+  {
+    const doc = readJson(join(rafaDir, "session-facts.json"));
+    if (doc?.schemaVersion === 1 && Array.isArray(doc.facts) && doc.facts.length) {
+      let stale = 0;
+      for (const f of doc.facts) {
+        try {
+          const changed = execSync(`git diff --name-only ${f.verifiedAtSha}`, {
+            cwd: root,
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "ignore"],
+          })
+            .split("\n")
+            .filter(Boolean);
+          if (
+            (f.dependsOn ?? []).some((p) =>
+              changed.some((c) => c === p || c.startsWith(p.endsWith("/") ? p : p + "/")),
+            )
+          )
+            stale++;
+        } catch {
+          stale++; // unknown sha — fail-honest, count it stale
+        }
+      }
+      lines.push(
+        `[rafa · facts] ${doc.facts.length} session fact(s) banked (.rafa/session-facts.json — spawned agents read it FIRST and cite "SF-n unchanged" instead of re-deriving)` +
+          (stale ? ` · ${stale} STALE — re-verify or \`rafa facts prune --stale\`` : ""),
+      );
+    }
+  }
+
+  // Sage-due bridge (wave 5.5 — mechanical detection): the checkpoint-written
+  // loop-event cache vs the learnings ledger, compared LOCALLY (zero platform
+  // calls). Sage's trigger was a discretionary end-of-session SOP step and
+  // never fired organically — detection now lands front-of-session where
+  // reminders get obeyed; only the SPAWN stays with the conductor.
+  {
+    const cache = readJson(join(rafaDir, "loop-events-tail.json"));
+    if (cache?.schemaVersion === 1 && Array.isArray(cache.events)) {
+      let ledgerAt = null;
+      const ledgerPath = join(root, ".claude", "rafa", "learnings", "ledger.md");
+      if (existsSync(ledgerPath)) {
+        const m = readFileSync(ledgerPath, "utf8").match(
+          /^-\s*Generated:\s*([0-9]{4}-[0-9]{2}-[0-9]{2}(?:[T ][0-9:.Z+-]+)?)/m,
+        );
+        if (m) {
+          const t = Date.parse(m[1]);
+          if (Number.isFinite(t)) ledgerAt = t;
+        }
+      }
+      const fresh =
+        ledgerAt == null
+          ? cache.events
+          : cache.events.filter((e) => Number.isFinite(e.at) && e.at > ledgerAt);
+      if (fresh.length >= 10)
+        lines.push(
+          `[rafa · sage] sage due: ${fresh.length} loop events since the last learnings pass` +
+            (ledgerAt == null ? " (no ledger yet — sage has never run here)" : "") +
+            ` — spawn sage at the next completion boundary (zero-command; this line is the trigger, not a suggestion).`,
+        );
+    }
+  }
+
+  // Benchmark liveness (harness-arc: the proof engine is workflow-woven, never a
+  // dev-typed command) — a scanned brain with no MEASURED benchmark is a gap the
+  // scan SOP's Prove-it step closes. Absence sensor only; never a nag mid-flow.
+  const hasBrain = existsSync(join(rafaDir, "brain", "rules"));
+  const measuredBenchmark = readJson(join(rafaDir, "benchmark.json"))?.measured === true;
+  if (hasBrain && !measuredBenchmark)
+    lines.push(
+      `[rafa · benchmark] no measured token-proof for this repo yet — the next /rafa scan runs the Prove-it step (brain-vs-cold, harness-counted) automatically.`,
+    );
+
   // Suggested next — ONE deterministic recommendation, ranked by consequence:
   // a teammate blocked by a conflict > an unbanked correction > resuming the
   // active plan > staleness repair. Guidance is front-loaded here (and ambient
