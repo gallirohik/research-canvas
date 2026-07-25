@@ -91,6 +91,24 @@ convention — see [RSC client boundary](/brain/rules/rsc-client-boundary.md)). 
    performance · architecture · product · ops**. Weight the **silent** issues (directive 2):
    convention violations the brain documents, framework boundary breaches (e.g. RSC), missing
    authz, drifting contracts. The brain's conventions are your oracle for "what's a violation here."
+
+   **The architecture lens has a METHOD (wave 6)** — criteria adapted from the installed
+   `improve-codebase-architecture` skill (READ as criteria, never invoked — it is
+   `disable-model-invocation`; the method below stands whether or not the skill is installed):
+   - **Scope by heat, not by sweep** (YAGNI): unless the dev named a direction, walk
+     `git log --oneline` for the hot spots — churn is where depth pays; cold code waits.
+   - **Deep vs shallow judgment**: a module earns its interface when the interface is smaller
+     than what it hides. Bouncing between many small modules to follow one behavior, pure
+     functions extracted only for testability, and leaky seams are the friction signals.
+   - **The deletion test**: would deleting this module CONCENTRATE complexity somewhere honest,
+     or just smear it around? "Concentrates" marks a candidate.
+   - **Candidates are normal §3 improvement files** (zero schema change): before/after as body
+     prose + a `Confidence: Strong | Worth exploring | Speculative` body line; inside these
+     notes use the depth vocabulary — module · interface · implementation · seam · adapter ·
+     depth · leverage · locality — and keep it INSIDE the architecture lens (the rest of the
+     ledger speaks the repo's own language).
+   - **The big-bang guard is sovereign** (directive 1): a `Strong` candidate lands as its first
+     10-minute slice or a P2 backlog item — never a grand refactor plan.
 3. **Delegate security.** Run `pnpm audit` (dep CVEs). Recommend/run the **`security-review`**
    skill and semgrep/CodeQL if available. Record *tool* results as improvements; the LLM pass is
    observational only — never present it as an authoritative audit.
@@ -166,3 +184,7 @@ the ledger the nudge will read.
   beyond the deterministic cite-check.
 - Debt-score weighting calibrated from real runs.
 - Per-lens diverse validators (a security lens checked by a security-minded validator).
+- A visual before/after artifact for architecture candidates (the
+  improve-codebase-architecture skill's HTML report) — deliberately SKIPPED for now: its
+  CDN-loaded Tailwind/Mermaid + temp-file-and-open mechanics violate the deterministic,
+  no-network posture; the ledger IS the report.

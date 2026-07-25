@@ -41,6 +41,34 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
   A plan whose children lack Done-checks is REJECTED here — compile never parses
   bodies (invariant #3); this gate is prism's.
 
+  **The grill pass (wave 6 — tier-bounded adversarial interview).** On top of
+  the two invariants, prism GRILLS the draft — the same procedure the installed
+  `grilling` skill carries (`.agents/skills/grilling/SKILL.md`; prism READS it
+  as criteria when installed, and this SOP carries the method regardless —
+  never invoked mid-validation, per its card). Per task, up the probe ladder:
+  **grounding** (which claims rest on assumption? name it, demand its
+  evidence — a session-fact id counts, vibes don't) · **unstated dependencies**
+  (what must exist for this task that no `blocked_by` declares?) · **vacuous
+  Done-check** (can it pass while the feature is broken? a check that
+  recomputes its expectation the way the code will, or that a no-op satisfies,
+  is TAUTOLOGICAL — criteria per the tdd skill's anti-patterns when installed)
+  · **YAGNI** (does the INTENT need this task, or did thoroughness invent it?).
+  Budget scales with the task's `validation_tier`: **light** = the two
+  invariants only (exactly today) · **standard** = ≤2 probes per task, ≤10 per
+  plan · **full** = the complete grilling procedure (one probe at a time,
+  survives-three-consecutive ends it). Every probe finding cites the plan line
+  it hits — an uncited probe is dropped, and findings feed the existing
+  REJECT-with-cited-reasons loop. Plan-lite drafts grill at light.
+
+  **The seam ritual (wave 6 — TDD's consent moment, no new prompt).** For code
+  tasks in TDD-eligible repos (the tdd skill installed + a test harness
+  detected — the build SOP's gate), every LEAF's `## Done-check` NAMES the seam
+  under test: *"`<runner>` on `<test-file>` at seam `<the public interface>`
+  exits 0"*. Seams come from recall (the brain's contracts/flows) — never
+  invented at build time. The plan-approval summary lists the seams as their
+  own line, so **the dev approving the plan IS the tdd skill's "confirm seams
+  with the user" step** — consent rides the existing approval gate.
+
 ## Procedure
 
 1. **Staleness check** — compare the platform envelope's `brainForSha` against the
@@ -58,7 +86,14 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
    carries the glimpse fields — `title` (what) · `description` (why) ·
    `approach` (how, one line) · `assignee` when known · `blocked_by` for
    intra-plan dependencies (a dependency IS a blocker; blocked is DERIVED,
-   never a status) · optional `priority` 0–4 / `estimate`. Every LEAF carries a
+   never a status) · optional `priority` 0–4 / `estimate` ·
+   **`validation_tier` (wave 5 — rigor scales with blast radius, not with
+   process): assign per LEAF from what the task touches — contract/state-shape/
+   graph surface → `full` · pure types/docs/leaf-UI → `light` · everything else
+   → `standard` (the default when omitted). The tier bounds prism's
+   RE-DERIVATION DEPTH only; the Done-check gate itself never relaxes, and the
+   tier rides the task's loop events so sage can audit the tiering against
+   escaped-bug reality instead of anyone guessing.** Every LEAF carries a
    `## Done-check`. The blast radius goes on the EPIC's `domains:` — it rides
    `push_plan` and the platform renders the plan's brain slice beside it.
    ADR material (alternatives, risks, non-goals) lives in the epic body AND

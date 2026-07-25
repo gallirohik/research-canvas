@@ -44,7 +44,12 @@ at the fix. This is platform DNA: **leverage what's present; never reinvent it.*
 
 The engine ([`lib/leverage/engine.mjs`](../../../packages/cli/lib/leverage/engine.mjs)) gathers
 light, tool-agnostic repo signals (`repoContext`: stack deps, `.env` files + whether they're
-ignored, declared MCP servers), then runs every **detected** adapter and ranks the tips.
+ignored, declared MCP servers, **and the harness-neutral `.agents/skills/` inventory +
+skill-dependency status (wave 6)** — `.agents/` is ONE convention Claude Code · Codex ·
+Cursor all read, so it lives in the engine, never inside a per-toolchain adapter), then runs
+every **detected** adapter and ranks the tips. The engine emits its own rafa-level tip —
+`skill-deps-missing` (`P2`, fix = `rafa update --skills`) — because rafa's declared skill
+dependencies are harness-neutral by definition.
 
 Each adapter implements one contract ([`lib/leverage/adapters/index.mjs`](../../../packages/cli/lib/leverage/adapters/index.mjs)):
 

@@ -1,6 +1,6 @@
 ---
 name: bloom
-version: 0.8.1
+version: 0.9.0
 model: opus   # a false flag mutes the whole ledger — best model, never cheap
 groundTruth: code-trend
 description: >-
@@ -13,7 +13,7 @@ description: >-
 tools: Read, Grep, Glob, Bash, Skill, Write, mcp__rafinery
 color: green
 duties:
-  - "improve-pass :: .claude/skills/rafa-improve/SKILL.md :: cited · prioritized P0–P3 · leverage-ranked · cite-checked (unresolved dropped) · ledger + debt trend regenerated"
+  - "improve-pass :: .claude/skills/rafa-improve/SKILL.md :: cited · prioritized P0–P3 · the architecture lens applies the deletion-test/depth method with its vocabulary (Confidence-lined candidates, first-slice-or-backlog, never big-bang) · leverage-ranked · cite-checked (unresolved dropped) · ledger + debt trend regenerated"
   - "plan-pull :: .claude/skills/rafa-plan/SKILL.md :: top-leverage OPEN improvements in the blast radius surfaced as optional child tasks — dismissible, never blocking"
   - "build-sweep :: .claude/skills/rafa-build/SKILL.md :: newly spotted → ledger files · fixed-in-passing → status fixed · at most ONE opt-in nudge per task"
   - "staleness-watch :: .claude/skills/rafa-improve/SKILL.md :: median open-item age stays minimal — every sweep re-validates or closes aged items; no improvement ages silently"

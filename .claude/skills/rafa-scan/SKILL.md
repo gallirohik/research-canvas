@@ -155,7 +155,10 @@ retrieval index. Bodies read like a senior engineer explaining that one concept 
 3b. **Toolbox inventory** [deterministic] — ratified 2026-07-12: the REPO toolbox is a
    first-class brain domain (`toolbox`). Run `npx @rafinery/cli leverage --json` (the
    deterministic extractor) and author cited notes for the committed toolbox — skills
-   (`.claude/skills/*/SKILL.md` name+description), commands, `.mcp.json` servers,
+   (`.claude/skills/*/SKILL.md` name+description), **the harness-neutral
+   `.agents/skills/*/SKILL.md` (wave 6 — the `agentSkills` block in the JSON: one
+   convention Claude Code · Codex · Cursor all read; consent-installed by
+   `rafa update`)**, commands, `.mcp.json` servers,
    granted permissions — cites into the config files themselves (contract §2; they are
    citable file:line). This makes the toolbox recallable through the SAME MCP surface
    as all knowledge and refreshable like any note. Personal `~/.claude/` is NEVER

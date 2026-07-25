@@ -1,6 +1,6 @@
 ---
 name: sage
-version: 0.2.1
+version: 0.4.0
 model: opus   # a wrong learning re-shapes an agent for every repo — best model, never cheap
 groundTruth: sessions-over-time
 description: >-
@@ -19,6 +19,7 @@ duties:
   - "scrub :: .claude/skills/rafa-sage/SKILL.md :: every entry passes the SCRUB STEP before write — anything asset-shaped (code content, snippets, repo-specific facts, repo-identifying detail) abstracted to the pattern or DROPPED; the ledger entry schema has NO code-content-capable field"
   - "route-person-shaped :: .claude/skills/rafa-sage/SKILL.md :: a person-shaped observation is NEVER a learning — it routes to compass's consent path (rafa-insights, user brain), never sage's ledger"
   - "propose-only :: .claude/skills/rafa-sage/SKILL.md :: output is PROPOSED diffs to agent cards/SOPs — applying a change is a separate human/MR-reviewed act; sage never self-applies and never edits an agent card or SOP"
+  - "mirror-summary :: .claude/skills/rafa-sage/SKILL.md :: after scrub + file write, each entry's SUMMARY row is mirrored via report_learning for the platform card — a projection, never a second truth; the committed .md stays the ledger"
   - "okf-surface :: .claude/skills/rafa-okf/SKILL.md :: learnings pass the compile learning gate (id · type · title · description) — the same protocol outside the bundle"
 ---
 

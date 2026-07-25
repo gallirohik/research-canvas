@@ -36,6 +36,28 @@ description: "rafa SOP — generate the commit message with the id join-key: the
    outcome one-line ("Done-check: prism PASS") — the receipt travels with the
    code.
 
+## The body is REQUIRED and written for an AGENT reader (owner 2026-07-26)
+
+A subject-only commit is a broken contract here. The next reader of this
+message is most often an AGENT — ours (atlas recalling why a line exists, the
+distiller judging a claim against this change, sage reading shapes) or a
+foreign one — so the body must be SELF-CONTAINED and joinable:
+
+- **What, concretely** — the surfaces/behaviors that changed, named (not
+  "various fixes"); a reader must know the blast radius without the diff.
+- **Why — the intent** — the one thing the diff cannot show. State the
+  problem/decision that made this change necessary; paraphrase the pivotal
+  choice if one was made (it should also be a `log_decision`).
+- **Join keys** — mention the brain notes this change follows or invalidates
+  (`per rule <id>` / `staleness: touches <id>`), so the cite-graph and the
+  dirty queue read straight out of the log.
+- **No session deixis** — never "as discussed", "per the above", "the same
+  fix as before": the message must stand alone in `git log` a year later,
+  with zero conversation context.
+
+TDD-default red commits keep their fixed form (`[<task-id>] test: red —
+<seam>`) — the seam IS the body's content there.
+
 ## Why this exists (don't skip the bracket)
 
 The brain-commit hook captures every subject into `intent/<sha>.md`;

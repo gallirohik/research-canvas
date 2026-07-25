@@ -104,8 +104,16 @@ its OWN question:
 7. **The active task's Done-check** (from `get_active_plan`): does the diff
    satisfy what the plan said done means?
 8. Verdict: **PASS** or **ITERATE** with per-finding citations (note id +
-   file:line). Findings feed atlas (validate-and-correct — atlas fixes, the
-   judge re-checks; the reviewer never edits).
+   file:line). **Severity rides every finding (wave 6 — the
+   requesting-code-review taxonomy): `Critical (Must Fix)` · `Important
+   (Should Fix)` · `Minor (Nice to Have)`. ITERATE iff ≥1 Critical or
+   Important; Minor NEVER flips the verdict** (advisory noise must not
+   masquerade as a gate — and "not everything is Critical" is the taxonomy's
+   own first rule). Findings feed atlas (validate-and-correct — atlas fixes,
+   the judge re-checks; the reviewer never edits). The fresh-context reviewer
+   discipline the installed requesting-code-review skill prescribes
+   (precisely-crafted context, never the session's history) IS rafa's spawn
+   model already — confirmation, not new machinery.
 9. Emit **`report_loop_event(category: "review-verdict", outcome:
    PASS|ITERATE, subject: <task id or branch>)`** at the ruling — sage's
    evidence, monotonic, never a session-end sweep.
@@ -124,3 +132,9 @@ its OWN question:
 - Trusting the diff author's summary — judge code against rules.
 - Blocking on the gate — it is advisory; the merge reconciler is the hard gate.
 - Findings without citations (rule id + file:line) — uncited = unactionable.
+- **Mutating anything while judging** (wave 6, from the code-reviewer's
+  read-only rule): the review never touches the working tree, the index, HEAD,
+  or branch state — inspect another revision via `git show`/a throwaway
+  worktree, never a checkout on this one.
+- **Severity inflation** — a verdict where everything is Critical has stopped
+  discriminating; that is itself a review failure.
