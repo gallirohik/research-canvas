@@ -10,6 +10,8 @@ import {
   LangGraphAgent,
 } from "@copilotkit/runtime/langgraph";
 import { NextRequest, NextResponse } from "next/server";
+import dns from "node:dns/promises";
+import net from "node:net";
 
 // const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // const llmAdapter = new OpenAIAdapter({ openai } as any);
@@ -24,9 +26,37 @@ function isAuthorized(req: NextRequest): boolean {
   return Boolean(apiKey) && req.headers.get("x-api-key") === apiKey;
 }
 
+function isPrivateIPv4(ip: string): boolean {
+  const parts = ip.split(".").map(Number);
+  if (parts.length !== 4 || parts.some((p) => Number.isNaN(p))) return true;
+  const [a, b] = parts;
+  if (a === 0) return true; // unspecified / "this network"
+  if (a === 10) return true; // private
+  if (a === 127) return true; // loopback
+  if (a === 169 && b === 254) return true; // link-local
+  if (a === 172 && b >= 16 && b <= 31) return true; // private
+  if (a === 192 && b === 168) return true; // private
+  if (a >= 224) return true; // multicast (224-239) + reserved (240-255)
+  return false;
+}
+
+function isPrivateIPv6(ip: string): boolean {
+  const normalized = ip.toLowerCase();
+  if (normalized === "::1" || normalized === "::") return true; // loopback / unspecified
+  const ipv4Mapped = normalized.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (ipv4Mapped) return isPrivateIPv4(ipv4Mapped[1]);
+  const firstGroup = normalized.split(":")[0];
+  if (/^fe[89ab]/.test(firstGroup)) return true; // fe80::/10 link-local
+  if (/^f[cd]/.test(firstGroup)) return true; // fc00::/7 unique local
+  if (firstGroup.startsWith("ff")) return true; // multicast
+  return false;
+}
+
 // Rejects anything that could redirect this proxy (and its langsmithApiKey) at an
-// internal/private host instead of a real LangGraph Cloud deployment.
-function isSafeDeploymentUrl(value: string): boolean {
+// internal/private host instead of a real LangGraph Cloud deployment. Resolves DNS
+// (mirroring agents/python/src/lib/download.py's _is_safe_url) so a hostname that
+// merely *points* at a private address can't slip past a hostname-string check.
+async function isSafeDeploymentUrl(value: string): Promise<boolean> {
   let parsed: URL;
   try {
     parsed = new URL(value);
@@ -36,18 +66,21 @@ function isSafeDeploymentUrl(value: string): boolean {
   if (parsed.protocol !== "https:") return false;
 
   const hostname = parsed.hostname.toLowerCase();
-  const isPrivate =
-    hostname === "localhost" ||
-    hostname === "0.0.0.0" ||
-    hostname === "::1" ||
-    hostname.endsWith(".local") ||
-    /^127\./.test(hostname) ||
-    /^10\./.test(hostname) ||
-    /^192\.168\./.test(hostname) ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
-    /^169\.254\./.test(hostname);
+  if (hostname === "localhost" || hostname.endsWith(".local")) return false;
 
-  return !isPrivate;
+  let addresses: string[];
+  try {
+    addresses = (
+      await dns.lookup(hostname, { all: true, verbatim: true })
+    ).map((r) => r.address);
+  } catch {
+    return false;
+  }
+  if (addresses.length === 0) return false;
+
+  return addresses.every((addr) =>
+    net.isIPv4(addr) ? !isPrivateIPv4(addr) : !isPrivateIPv6(addr),
+  );
 }
 
 export const POST = async (req: NextRequest) => {
@@ -57,7 +90,10 @@ export const POST = async (req: NextRequest) => {
 
   const searchParams = req.nextUrl.searchParams;
   const requestedDeploymentUrl = searchParams.get("lgcDeploymentUrl");
-  if (requestedDeploymentUrl && !isSafeDeploymentUrl(requestedDeploymentUrl)) {
+  if (
+    requestedDeploymentUrl &&
+    !(await isSafeDeploymentUrl(requestedDeploymentUrl))
+  ) {
     return NextResponse.json(
       { error: "Invalid lgcDeploymentUrl" },
       { status: 400 },
