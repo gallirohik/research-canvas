@@ -58,7 +58,7 @@ doesn't validate, compile fails.
 | reflex queue          | `reflex.jsonl`                    | **generated** (local state — transport-excluded, NEVER pushed/ingested; transcript pointers are LOCAL, raw transcripts never ship) | `{id, p, t, tp}` per detected correction + append-only `{id, done, verdict, at}` markers (by the UserPromptSubmit sensor; read by `rafa reflex` + the digest) | tool       |
 | agent                 | `.claude/agents/*.md` (code repo) | **structured** (local gate — NOT in manifest)                                                                                      | §10                                                                                                                                                           | rafa       |
 | skill SOP             | `.claude/skills/rafa-*/SKILL.md` + `.claude/commands/rafa.md` (code repo) | **structured** (local gate — NOT in manifest)                                                                             | frontmatter parses · `name` == skill dir (conductor: semver `version`) · non-empty `description` — a workforce whose procedures don't parse doesn't ship      | rafa       |
-| learning              | `.claude/rafa/learnings/*.md` (code repo) | **structured** (local gate — NOT in manifest)                                                                              | OKF quartet-lite: `id` == stem · non-empty `type`/`title`/`description` (§11 outside the bundle; `learnings/ledger.md` is sage's generated index, skipped)     | sage       |
+| learning              | `.rafa/learnings/*.md` (gitignored `.rafa/` sibling of the improvement ledger; durable via the brain-repo mirror + the platform DB) | **structured** (local gate — NOT in the manifest; stored via `report_learning` → `agentLearnings`) | OKF quartet-lite: `id` == stem · non-empty `type`/`title`/`description` (§11; `learnings/ledger.md` is sage's generated index, skipped)     | sage       |
 | conflict copy         | `**/*.theirs.md`                  | **generated** (transient — a pending HUMAN decision)                                                                               | none — compile FAILS with the typed rule "unresolved checkpoint conflict" while one exists; every walker (emit · checker · validator) skips them              | tool       |
 
 The `agent` type is the one structured type outside `.rafa/`: the shipped agent cards
@@ -269,6 +269,17 @@ gates B2/B3, not emitted into the manifest). A note whose title/summary reads as
 absence claim without declaring `absent:` is listed as a checker WARN — prism's
 worklist, never a gate failure (a heuristic that fails the gate would be an assumed
 value).
+
+**Lifecycle — retirement is a TOMBSTONE, never a deletion (owner 2026-07-27
+r7c).** Notes accept optional `status: active | retired` (absent = active; the
+gate rejects any other value; `retired` rides the manifest). A note whose
+knowledge no longer holds KEEPS its file: set `status: retired` and append a
+dated `## Retired` body section — why, and what (if anything) supersedes it
+(`superseded by [new-note](/brain/rules/new-note.md)`). Retired notes are
+excluded from recall serving (a retired note in recall misleads) but remain in
+the bundle as history — continuity is the product. The same law binds every
+generated type: improvements close via `status: fixed|wontfix` plus a dated
+closure line in the body; a state change is never recorded by removing a file.
 
 ---
 
@@ -607,7 +618,7 @@ state**, marked by `envelope.plane: "state"`:
 | `list_working_sets`                                                                     | branch working set (**READ**)                           | enumerates branches with LIVE candidate rows + counts only (no bodies) — closes the 07-14 sensor gap (`get_working_set` needs a branch arg; nothing listed them); feeds the SessionStart digest pending line                                                                                                                                                         |
 | `report_loop_event`                                                                     | **loopEvents** — the loop-outcome ledger (sage's evidence) | ONE structured outcome per ruling, shapes only (enum category + per-category enum outcome + `subject` shape ref, secret-screened). Wave 5 trust plane, STRICT (no legacy path): **required actor envelope** `{model, agent, runner ∈ sandbox\|ci\|session}` (mechanical CLI emits use `model:"mechanical"`); **required `verification {method: static\|live, tool?, evidence?}`** on `prism-verdict`/`gate-result`/`review-verdict` — the static-vs-executed distinction is structural, never prose; optional `dedupeKey` (≤120) makes the emit **idempotent** (same `(repo, key)` never lands twice — response says `deduped`) and `tier ∈ light\|standard\|full` records the §7 `validation_tier` the ruling ran at |
 | `get_loop_events`                                                                       | loopEvents (**READ**)                                   | newest-first shape read (optional category filter, limit ≤500): category/outcome/subject + actorMeta/verification/dedupeKey/tier + at — no bodies, no code; sage splits miss patterns by verification method, actor, and tier                                                                                                                                          |
-| `report_learning`                                                                       | **agentLearnings** — sage's summary-row mirror          | sage ONLY (wave 4.1): mirrors the SUMMARY ROW of one committed ledger entry (`.claude/rafa/learnings/<id>.md` stays the single truth, MR-gated, never self-applied). Asset-free ENFORCED server-side: enum status/leverage/categories, `.claude/`-only diff target, length caps, code-fence + secret screens; upsert by id                                                                                                          |
+| `report_learning`                                                                       | **agentLearnings** — the learnings STORE                | sage ONLY: stores one learning (local copy in `.rafa/learnings/<id>.md`, the gitignored ledger sibling; the DB row is the durable truth the platform renders). Asset-free ENFORCED server-side: enum status/leverage/categories, `.claude/`-only diff TARGET (the card/SOP a learning proposes to change), length caps, code-fence + secret screens; upsert by id                                                                                                          |
 
 State tools work with or without an ingested brain (a working set can exist —
 and a plan can be pushed — before the first scan) and are exempt from the
@@ -736,6 +747,109 @@ bloom (improvements · ledger), prism (checklist + validation lens), sage
 journals). compass carries `okf-awareness`: it writes platform state, never
 bundle files, and owns the PORTABILITY law — bundles are exchangeable by
 design, so person-scoped content never lands in one.
+
+---
+
+## 12. The guarded loop — moments · signals · gates · lanes  (capture doctrine, consolidated 2026-07-27)
+
+The owner's laws, ratified across `.fable/decisions.md` 2026-07-26/27 (r2–r7c),
+in one map. Three sentences carry all of it:
+
+1. **Capture is mandatory and mechanical** — session truth NEVER depends on a
+   model remembering an SOP line; every path has a deterministic backstop, and
+   the final backstop is always the merge (server-side, unskippable).
+2. **Continuity is the product** — one concept/issue = one id forever; every
+   pass updates in place; closing anything is a TOMBSTONE (status flip + dated
+   reason in the body), never a file removal. Lose continuity and "everything
+   becomes new — there is no direction."
+3. **Security is integral, never an aftermath** — the audit engine fires at
+   plan, build, scan, and EVERY merge level, transparently.
+
+### 12.1 The five guarded moments
+
+| Moment | Layer | What fires — and what it guarantees |
+|---|---|---|
+| **develop** (each edit) | harness sensor (agent sessions) | PostToolUse appends to the dirty queue (`.rafa/dirty.jsonl`) — the touched-code signal. Manual edits are covered later by git's own diff (see checkpoint). |
+| **commit** | git hook (any workflow) | `post-commit` mirrors `.rafa/` 1-1 onto the brain branch (`code-commit:` trailer = the join key). A mirror failure is LOUD (repair command printed, sensor-error recorded) — never silent. |
+| **checkpoint** (task boundary + pre-push) | CLI (`rafa checkpoint`) | (a) syncs the branch working set (CAS); (b) **converges reported improvement flips** into real ledger files (overlay → hydrate → status flip); (c) **compulsorily hydrates** every note citing touched code — dirty queue ∪ `git diff <trunk>...HEAD`, so manual edits count — so affected-note edits happen DURING development; (d) pushes the sensor heartbeat. |
+| **push** | git hook (any workflow) | `rafa guard --pre-push` FIRST: every outgoing commit must have its brain mirror — self-heal, then **BLOCK** on genuine capture loss (git-local check; `RAFA_HOOKS_DISABLED=1` = the on-the-record escape hatch). Then checkpoint + durable brain-branch push. |
+| **merge** (every level) | platform (unskippable) | Branch→branch: fold + the platform-side dep audit (`securityReports`, `source: branch-osv`). Merge→prod: the full reconciliation (§12.3) + the in-graph security lane. This moment needs NO dev-side state — it is why nothing can be lost. |
+
+**The trunk is the configurable prod branch, never a hardcoded `main`.** Every
+moment above resolves it dynamically — `trunkBranchOf` (stamped `prodBranch` →
+`origin/HEAD` → `main` only as the last-resort fallback for an unconfigured
+repo); the merge lane keys on the merge event's actual target branch. A repo
+whose default is `develop`/`release`/anything is guarded identically. Feature→
+feature merges and feature→prod merges both fire the affected sweep and the
+parallel-brain guard against that repo's real trunk manifest.
+
+### 12.2 The signals (computed, never self-reported promises)
+
+- **dirty queue** — touched code files → citing notes (local manifest), the
+  staleness/hydration driver.
+- **reported overlays** — `report_improvement_status` events vs canonical rows;
+  a mismatch = a flip not yet converged. Self-converging: once the row matches,
+  the overlay disappears. The tool's response carries `required_next` (hydrate →
+  flip → checkpoint) so the SOP enforces itself at the moment of use.
+- **sensor heartbeat** — per-hook wired/lastFire/lastError, pushed at every
+  checkpoint; the platform's view of whether the dev-side gates are alive.
+- **capture-trust** (per merge, computed at dispatch) — trusted ⇔ the working-set
+  checkpoint arrived AND the heartbeat is fresh (≤7d) with wired, error-free
+  post-commit/pre-push hooks. Conservative by construction: **no signal = no
+  trust**. Gates the affected-notes sweep (§12.3).
+
+### 12.3 Reconciliation — the lanes of one merge
+
+`gather → classify → { atlas⇄prism · bloom · security-audit } → manifest (defer join) → push`
+
+- **Candidates** = the branch's working set (DB plane) or the brain-branch diff
+  (git plane), **∪ reported overlays** (deterministic status-flip candidates
+  built from the trunk copy — dead hooks lose nothing), **∪ the affected
+  sweep** when capture is untrusted: merge-changed code ∩ trunk-manifest
+  citations → every affected note joins as `affected` and is RE-GROUNDED on the
+  record ("re-verified", or judged when citations broke).
+- **classify** (deterministic rigor gradient, both lanes): identical → "already
+  banked" (CAS no-op) · updated+grounded → fold latest-wins · new+grounded →
+  bank — **but first the PARALLEL-BRAIN GUARD**: a NEW note/improvement
+  overlapping an existing one (same domain/category + equal title OR ≥50%
+  shared cited files vs the trunk manifest) goes CONTESTED — fold into the
+  existing id or defend a genuinely new one; duplicates never bank silently ·
+  deleted+code-gone → **prune = TOMBSTONE WRITE** (`status: retired`/`fixed` +
+  dated reason citing the merge sha — the file is never removed) · anything
+  broken/ambiguous → CONTESTED for the lane's judge (atlas | bloom), who also
+  tombstones refutations.
+- **security lane** — deterministic, LLM-free, dependency tier: lockfile at the
+  merge sha (any manager, §12.5) → OSV → a `securityReports` row. NEVER
+  load-bearing: every failure is `ran:false + reason` in the step timeline.
+- The org brain has ONE writer — this reconciler. The session-distill verb is
+  retired; `rafa distill --headless` (org-CI, own key) is the sole other adapter.
+
+### 12.4 Continuity laws (scan · improve · every pass)
+
+- **Step 0, always**: `rafa pull --full` + confirm `.rafa` at the brain
+  remote's HEAD before scanning or improving. **Founding is PLATFORM truth**
+  (zero knowledge served) — local emptiness proves nothing.
+- **Ids are stable forever**; refresh = update in place; new ids only for
+  genuinely new concepts (say why in the body); triage (backlog/wontfix) and
+  trends are never reset.
+- **Tombstones** (§2 lifecycle): notes retire via `status: retired` + a dated
+  `## Retired` section (superseded-by linked); improvements close via
+  `status: fixed|wontfix` + a dated closure line with evidence. Recall excludes
+  tombstones ("history, not truth"); `verify-citations` skips them (their dead
+  citations are the record of what they once claimed).
+
+### 12.5 Security, woven (never a dev verb)
+
+`rafa audit` (rafa.audit/v1) is SELF-CONTAINED — built-in lockfile parsing
+(pnpm · npm · yarn · bun, resolved dynamically) + keyless OSV + the built-in
+secrets ruleset; semgrep/gitleaks are optional enhancers; nothing is ever
+bundled or installed. It fires: **plan** (before approval, presented verbatim —
+"clean" is said out loud) · **build** (lockfile-touching tasks re-run the dep
+tier, delta reported in one line) · **scan/improve** (full three-tier profile →
+`category: security` rows, mechanical priority map, P0s travel outside the
+blast radius) · **every merge** (§12.1/§12.3). `rafa doctor` fails a
+`package.json` repo with no lockfile and prints the per-manager generate
+command — coverage is never silently absent.
 
 ---
 

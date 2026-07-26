@@ -61,11 +61,13 @@ the learnings-ledger entry schema, and the procedure. Spawned by the **conductor
 or a boundary offer), context-isolated.
 
 ## Output
-The **learnings ledger** — a committed, human-reviewed governance artifact at
-`.claude/rafa/learnings/` (per the SOP): `learnings/<id>.md` (one proposed card/SOP diff each) +
-`ledger.md` (the index). **Never** a Convex table; **never** inside any customer `.rafa/brain/`
-(learnings are about OUR agents — they never mix with customer knowledge). Every entry cites loop-
-event shapes only and passes the scrub step, or it doesn't ship.
+The **learnings ledger** — a sibling of the improvement ledger (owner 2026-07-27) in gitignored
+`.rafa/learnings/` (per the SOP): `learnings/<id>.md` (one proposed card/SOP diff each, an OKF
+`type: Learning` concept) + `ledger.md` (the index). Storage mirrors improvements — gitignored
+locally, durable via the brain-repo mirror + the platform DB (`agentLearnings`, written with
+`report_learning`). **Never** inside any customer `.rafa/brain/` (learnings are about OUR agents —
+they never mix with customer knowledge). Every entry cites loop-event shapes only and passes the
+scrub step, or it doesn't ship.
 
 ## Style
 Terse, pattern-first, no nagging. Lead with the highest-leverage learning — the one card/SOP change

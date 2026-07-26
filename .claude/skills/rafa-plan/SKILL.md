@@ -23,13 +23,13 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
   the tools; the dev never asks for it. Repo not platform-connected (no `rafinery`
   MCP in the session)? Fall back to reading `.rafa/brain/` files directly — same
   knowledge, just unserved.*
-- **bloom pulls** — `list_improvements` in the blast radius (PLUS any open
-  `category: security` P0 regardless of region — the one class that travels;
-  one line, dismissible, never blocking); surface the
+- **bloom pulls** — `list_improvements` in the blast radius, surfacing the
   top-leverage open items as optional *"while-you're-here"* child tasks
-  (leverage-ranked, dismissible, never blocking). **Any improvement the plan
-  ADOPTS (as a task or the plan's very subject) is hydrated NOW** —
-  `rafa hydrate improvement <id>` — so the canonical ledger file is in the
+  (leverage-ranked, dismissible, never blocking). Open `category: security` P0s
+  come along too — the one class that travels regardless of region (contract
+  §12.5), one line, still dismissible, never blocking. **Any improvement the
+  plan ADOPTS** — as a task or as the plan's very subject — **is hydrated NOW**
+  (`rafa hydrate improvement <id>`), so the canonical ledger file is in the
   branch working set from the start and the eventual `status: fixed` edit lands
   on that same file, never a path-drifted twin authored at build's end.
   **Also pull `get_knowledge_gaps`** (the open backlog — what devs asked that
@@ -102,17 +102,17 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
    the pivotal choices are logged as DECISIONS at approval (`log_decision`:
    context · options · decision · rationale; actor = the dev for their calls).
 3. **Ledger pull** (bloom) → optional leverage tasks in the blast radius.
-3b. **Security transparency** (2026-07-26 r2 — "security is not an aftermath").
-   Run `npx @rafinery/cli audit --json` (seconds; reuse a same-session
-   `security-audit.json` if fresh) and present the picture TO THE DEV, verbatim
-   and unburied, before the plan is approved: one line of severity totals +
-   which tiers ran, then any critical/high finding whose package or file sits
-   in THIS plan's blast radius (per [rafa-security](../rafa-security/SKILL.md)'s
-   reachability method). A blast-radius critical/high → propose it as a plan
-   child task (the fix rides the work); open `category: security` P0s surface
-   regardless of region. Transparent means: the dev sees the counts even when
-   everything is clean — "dependency tier clean at <sha>" is one honest line,
-   never silence.
+3b. **Security transparency — integral, never an aftermath** (contract §12.5;
+   owner 2026-07-26). Run `npx @rafinery/cli audit --json` (seconds; reuse a
+   same-session `security-audit.json` if fresh) and put the picture in front of
+   the dev — verbatim and unburied — before the plan is approved: one line of
+   severity totals plus which tiers ran, then any critical/high finding whose
+   package or file sits in THIS plan's blast radius (per
+   [rafa-security](../rafa-security/SKILL.md)'s reachability method). A
+   blast-radius critical/high becomes a plan child task, so the fix rides the
+   work. Transparency is the whole point — the dev sees the counts even when
+   nothing is wrong: *"dependency tier clean at <sha>"* is one honest line,
+   said out loud, never silence.
 4. **Leverage-match** — recommend existing skills/tools/MCP that fit the tasks;
    never plan to hand-roll what a capability already does.
 5. **prism plan-validation** → REJECT/fix loop until clean.

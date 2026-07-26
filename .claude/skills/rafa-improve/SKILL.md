@@ -84,6 +84,17 @@ convention — see [RSC client boundary](/brain/rules/rsc-client-boundary.md)). 
 
 ## Procedure (`/rafa improve`)
 
+0. **RESOLVE THE REAL LEDGER FIRST — mandatory (the same continuity law as
+   scan's Step 0; canonical loop map: [contract §12.4](../../rafa/contract.md)).**
+   Run `npx @rafinery/cli pull --full` and confirm `.rafa` sits at the brain
+   remote's HEAD before the pass. The reconcile-against-existing step below
+   (dedup · auto-close · preserve triage) is only real when the REAL rows are
+   present — a pass over a stale/empty `.rafa` mints parallel improvement ids,
+   orphans the dev's triage (backlog/wontfix), and resets the debt trend:
+   continuity IS the product. **Improvement ids are stable forever**: an
+   existing issue keeps its id across passes (status moves, the file persists);
+   a new id is for a genuinely new issue only.
+
 1. **Read the brain — it is your index.** Domains, conventions (incl. flagged
    non-exemplars), and contracts. Assess *efficiently* from the brain + cited code; do not
    blind re-read the repo. (Eat our own dog food — the brain exists to make this cheap.)
@@ -110,8 +121,9 @@ convention — see [RSC client boundary](/brain/rules/rsc-client-boundary.md)). 
    - **The big-bang guard is sovereign** (directive 1): a `Strong` candidate lands as its first
      10-minute slice or a P2 backlog item — never a grand refactor plan.
 3. **The security profile.** Run `npx @rafinery/cli audit --json` — the SELF-CONTAINED
-   engine (dep CVEs via the built-in OSV client + pnpm audit; secrets via the built-in
-   ruleset; SAST via semgrep only if present — a tier that didn't run says `ran:false`).
+   engine (dep CVEs via the built-in multi-manager lockfile parser — pnpm · npm · yarn ·
+   bun — + keyless OSV; secrets via the built-in ruleset; SAST via semgrep only if present
+   — a tier that didn't run says `ran:false`).
    Then follow [rafa-security](../rafa-security/SKILL.md): findings → `category: security`
    rows with the MECHANICAL priority map (critical→P0 · high→P1 · moderate→P2 ·
    low/dev-only→P3), reachability annotated from the brain's domain map but never
@@ -121,7 +133,10 @@ convention — see [RSC client boundary](/brain/rules/rsc-client-boundary.md)). 
 4. **Write improvements.** One file per improvement, cited (`file:line :: token`), prioritized,
    leverage-ranked. **Reconcile** against the existing ledger: dedup; **auto-close** improvements
    whose code is now clean (`status: fixed`); **preserve** the dev's prior triage
-   (backlog/wontfix stay).
+   (backlog/wontfix stay). **Closing is a TOMBSTONE, never a removal** (the §2/§12.4
+   lifecycle law): flip the status AND append a dated closure line in the body —
+   what fixed it, the evidence (commit/file) — the file and its history stay;
+   the trend depends on it.
 5. **Cite-check (the fidelity gate).** Run
    `npx @rafinery/cli verify-citations --root=.rafa/improve --dirs=improvements`. Every cite
    must resolve; **drop or fix any that don't** — a hallucinated improvement is the cardinal sin.

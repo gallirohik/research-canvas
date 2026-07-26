@@ -7,5 +7,12 @@
 # the dev never maintains the brain. Non-blocking and silent on every path.
 [ "$RAFA_HOOKS_DISABLED" = "1" ] && exit 0
 [ -f "rafa.json" ] || exit 0
-node ".claude/rafa/hooks/brain-commit.mjs" >/dev/null 2>&1 || true
+# r5 (whole-brain capture): a mirror failure is LOUD + recorded — the commit
+# already happened (post-commit can't block), but the pre-push guard will
+# refuse to ship an unmirrored commit, so the failure surfaces NOW, not never.
+node ".claude/rafa/hooks/brain-commit.mjs" >/dev/null 2>&1 || {
+  echo "rafa · BRAIN MIRROR FAILED for this commit — capture incomplete." >&2
+  echo "  Repair before pushing: node .claude/rafa/hooks/brain-commit.mjs  (the pre-push guard will block until mirrored)" >&2
+  mkdir -p .rafa 2>/dev/null && printf '{"t":%s000,"hook":"post-commit","error":"brain mirror failed"}\n' "$(date +%s)" >> .rafa/sensor-errors.jsonl 2>/dev/null || true
+}
 exit 0

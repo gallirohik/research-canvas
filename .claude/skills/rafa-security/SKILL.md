@@ -6,9 +6,10 @@ description: "rafa SOP — the security profile: run the self-contained `rafa au
 # security — the profile  (woven, never a command)
 
 rafa's security posture is **woven into the loop, not a chore**: the dev never
-types a security command. Owner doctrine (2026-07-26 r2): *"security is not an
-aftermath — it is an integral part of the development cycle."* The engine
-fires at every moment of that cycle:
+types a security command. Owner doctrine (owner 2026-07-26, consolidated in
+[contract §12.5](../../rafa/contract.md)): *"security is not an aftermath — it
+is an integral part of the development cycle."* The engine fires at every
+moment of that cycle:
 
 - **plan** — the audit runs before approval and its picture is presented to
   the dev verbatim (rafa-plan §3b): totals + blast-radius criticals; clean is
@@ -28,9 +29,13 @@ the platform's Security tab reads the merge-level rows.
 Run **`npx @rafinery/cli audit --json`** and parse the `rafa.audit/v1`
 envelope. The engine is SELF-CONTAINED — it needs no installs, ever:
 
-- **dependency** — built-in pnpm-lock parser + the OSV.dev advisory API,
-  merged with `pnpm audit`; per finding: package · GHSA/CVE + aliases ·
-  severity + CVSS · direct-vs-transitive chain · fixed-in · dev-only flag.
+- **dependency** — a built-in **multi-manager** lockfile parser (pnpm · npm ·
+  yarn · bun, resolved dynamically richest-first — never a pnpm hardcode) +
+  the keyless OSV.dev advisory API, merged with `pnpm audit` on pnpm repos;
+  per finding: package · GHSA/CVE + aliases · severity + CVSS ·
+  direct-vs-transitive chain (pnpm/npm; yarn/bun are honestly packages-only) ·
+  fixed-in · dev-only flag. No lockfile → the tier is `ran:false` and
+  `rafa doctor` prints the per-manager command to generate one.
 - **secrets** — built-in curated ruleset over tracked files (`.env*` never
   opened; fingerprints, never secret bytes). gitleaks enhances if present.
 - **sast** — semgrep if installed (pinned `p/security-audit`), otherwise the
@@ -59,8 +64,10 @@ Required frontmatter as ever (`title` · `summary` · `fix` · `leverage` ·
 
 **Reconcile like any improvement**: dedupe against existing rows by the stable
 finding id (in the body); auto-close rows whose finding vanished from a fresh
-audit (`status: fixed` — the lockfile bump landed); preserve the dev's triage
-(backlog/wontfix stay).
+audit (`status: fixed` — the lockfile bump landed) **with a dated closure line
+in the body naming the evidence (the new lockfile version / the vanished
+advisory) — a tombstone, never a removal** (the §2/§12.4 lifecycle law);
+preserve the dev's triage (backlog/wontfix stay).
 
 ## Brain-ground the reachability (the judgment part)
 
