@@ -50,7 +50,7 @@ Conformance is our distribution wedge; verification stays the moat.
 | Agent | Files | What OKF-native means for you |
 |---|---|---|
 | **atlas** | `brain/rules/` · `brain/playbooks/` · `brain/coverage.md` | author `type` (§2 enum) + `title` + `summary` as ever; body cross-links as markdown links; optionally author `description`/`tags` — emit derives them from `summary`/`domain` if you don't |
-| **bloom** | `improve/improvements/` · `improve/ledger.md` | same; your files gain `type: Improvement` + `tags: [lens, priority]` at emit — author `found:` so timestamps are yours, not git's |
+| **bloom** | `improve/improvements/` · `improve/ledger.md` | same; your files gain `type: Improvement` + `tags: [category, priority]` at emit — author `found:` so timestamps are yours, not git's |
 | **prism** | `brain/checklist.md` | verdict frontmatter as ever (emit stamps `type: Health Report` + a derived description); at validation, treat the checker's LINKS warns as a worklist — dangling links are claims of future knowledge |
 | **sage** | `.claude/rafa/learnings/` | learnings are OKF concepts too: frontmatter + `type: Learning` + markdown links; outside the bundle but under the same protocol |
 | **conductor / plan·build** | `plans/**` · `brain/log.md` | plan items gain `type` from `kind` at emit (per-epic `plans/index.md`); journals + bodies use markdown links; `log.md` stays the reserved trail |

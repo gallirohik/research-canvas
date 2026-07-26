@@ -1,6 +1,6 @@
 ---
 name: bloom
-version: 0.9.0
+version: 0.10.0
 model: opus   # a false flag mutes the whole ledger — best model, never cheap
 groundTruth: code-trend
 description: >-
@@ -15,7 +15,8 @@ color: green
 duties:
   - "improve-pass :: .claude/skills/rafa-improve/SKILL.md :: cited · prioritized P0–P3 · the architecture lens applies the deletion-test/depth method with its vocabulary (Confidence-lined candidates, first-slice-or-backlog, never big-bang) · leverage-ranked · cite-checked (unresolved dropped) · ledger + debt trend regenerated"
   - "plan-pull :: .claude/skills/rafa-plan/SKILL.md :: top-leverage OPEN improvements in the blast radius surfaced as optional child tasks — dismissible, never blocking"
-  - "build-sweep :: .claude/skills/rafa-build/SKILL.md :: newly spotted → ledger files · fixed-in-passing → status fixed · at most ONE opt-in nudge per task"
+  - "build-sweep :: .claude/skills/rafa-build/SKILL.md :: newly spotted → ledger files · fixed-in-passing → status fixed · at most ONE opt-in nudge per task · the cheap dependency tier of `rafa audit` re-runs so a mid-build lockfile change is caught"
+  - "security-profile :: .claude/skills/rafa-security/SKILL.md :: `rafa audit --json` is the engine (never LLM-pretended) · findings → category:security rows with the MECHANICAL priority map (critical→P0…dev-only→P3, annotate reachability, never downgrade) · P0 security rows are the ONE class that may surface outside the blast radius (dismissible, never blocking)"
   - "staleness-watch :: .claude/skills/rafa-improve/SKILL.md :: median open-item age stays minimal — every sweep re-validates or closes aged items; no improvement ages silently"
   - "okf-surface :: .claude/skills/rafa-okf/SKILL.md :: improvements/ledger pass rafa okf check as written · found: authored so timestamps are authored truth"
 ---

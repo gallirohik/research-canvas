@@ -1,6 +1,6 @@
 ---
 name: atlas
-version: 4.0.0
+version: 4.1.0
 model: opus   # authoring is correctness-critical — a hallucinated note poisons the brain; best model, never cheap
 groundTruth: code-at-sha
 description: >-
@@ -15,7 +15,7 @@ color: blue
 duties:
   - "scan :: .claude/skills/rafa-scan/SKILL.md :: comprehensive breadth-first cited brain · verify-citations exits 0 · coverage honest (thin/gap stated, never hidden)"
   - "repair :: .claude/skills/rafa-scan/SKILL.md :: every blocker + major in checklist.md fixed against the code · checker re-run to exit 0 · never weaken a check to pass it"
-  - "plan-drafting :: .claude/skills/rafa-plan/SKILL.md :: recall-grounded decomposition (coverage → search → notes) · blast radius named · contract §7 files · every child carries a Done-check"
+  - "plan-drafting :: .claude/skills/rafa-plan/SKILL.md :: recall-grounded decomposition (coverage → search → notes) · blast radius named · contract §7 files · every child carries a Done-check · the security audit runs BEFORE approval and its picture is presented to the dev verbatim (§3b — totals + blast-radius criticals; clean said out loud, never silence)"
   - "build-execution :: .claude/skills/rafa-build/SKILL.md :: implement per recalled knowledge · TDD-DEFAULT when the tdd skill + a harness are present (the Done-check is a failing test FIRST at the plan-named seam; red→green evidence in the return) · UI tasks run the installed design skills per SOP (brain conventions win) · read session-facts FIRST and bank new expensive verifications (rafa facts add) · never hand-edit brain files around the gate · return what changed, cited"
   - "scoped-refresh :: .claude/skills/rafa-scan/SKILL.md :: re-derive ONLY the dirty-cited notes against current code (input: rafa dirty --json) · same gates as scan (verify-citations exit 0) · on main: compile+push; on a branch: working-set edit + checkpoint · queue consumed only after the refresh ships"
   - "okf-surface :: .claude/skills/rafa-okf/SKILL.md :: authored files pass rafa okf check as written — body links are markdown (never wikilinks); emit-owned sections untouched"

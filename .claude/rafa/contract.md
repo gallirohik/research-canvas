@@ -197,7 +197,8 @@ JSON. This is the exact shape the platform binds to.
     {
       "id": "dead-model-options-google-crewai",
       "priority": "P1", // P0 | P1 | P2 | P3
-      "lens": "product", // security|correctness|performance|architecture|product|ops
+      "category": "product", // security|correctness|performance|architecture|product|ops
+      "lens": "product", // transitional mirror of category (pre-2026-07-26 name) — dropped with the backfill arc
       "status": "open", // open | backlog | fixed | wontfix
       "title": "…",
       "summary": "…",
@@ -278,7 +279,7 @@ value).
 schemaVersion: 1
 id: dead-model-options-google-crewai # required · == filename stem
 priority: P1 # required · P0 | P1 | P2 | P3
-lens: product # required · security|correctness|performance|architecture|product|ops
+category: product # required · security|correctness|performance|architecture|product|ops
 status: open # required · open | backlog | fixed | wontfix
 title: Two of the four model options are dead and fail silently # required
 summary: google_genai and crewai route to unwired agents # required
@@ -294,6 +295,11 @@ found: 2026-07-02 # optional · ISO date
 
 Note: `title`, `summary`, `fix` are now **required frontmatter** — previously scraped
 from prose. That scraping is gone; these are authored values.
+
+`category` is the canonical field name (2026-07-26). The pre-rename name `lens`
+is accepted as a **deprecated alias** by the compile gate (`category ?? lens`,
+same enum); the manifest carries both keys during the transition. New files
+author `category:` only.
 
 ---
 
@@ -529,9 +535,9 @@ i.e. the default branch's instance).
 
 **Search = deterministic lexical retrieval; the server retrieves, the agent decides.**
 Fields searched per type — rule/playbook: `title, summary, domain, type` ·
-improvement: `title, summary, lens, blast_radius` · plan: `title, plan, parent`.
+improvement: `title, summary, category, blast_radius` · plan: `title, plan, parent`.
 Score = Σ over matched case-folded query tokens of field weight (`title` 3 ·
-`domain`/`lens`/`blast_radius`/`type`/`plan`/`parent` 2 · `summary` 1); tie-break
+`domain`/`category`/`blast_radius`/`type`/`plan`/`parent` 2 · `summary` 1); tie-break
 score desc then id asc; fields a type lacks are omitted, never defaulted. Candidates
 carry `matchKind: "lexical"` (`"semantic"` reserved).
 
