@@ -12,6 +12,12 @@
 [ "$RAFA_HOOKS_DISABLED" = "1" ] && exit 0
 [ -f "rafa.json" ] || exit 0
 
+# WHOLE-BRAIN CAPTURE GUARD (owner 2026-07-26 r5, non-negotiable): every
+# outgoing commit must carry its 1-1 brain mirror. Git-local check with
+# self-heal; a genuine miss BLOCKS the push — capture loss never ships
+# silently. RAFA_HOOKS_DISABLED=1 is the on-the-record escape hatch.
+npx -y @rafinery/cli guard --pre-push || exit 1
+
 echo "rafa · checkpoint (pre-push boundary) …"
 npx -y @rafinery/cli checkpoint || {
   code=$?

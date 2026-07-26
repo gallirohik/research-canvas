@@ -201,12 +201,13 @@ retrieval index. Bodies read like a senior engineer explaining that one concept 
 6. **Flow tracing** [LLM, cited] — from each entry point, hop-by-hop to termination
    (render / DB write / response) → `flow` playbooks. Add `how-to` playbooks for the
    recurring "add X" procedures these flows imply.
-   **One `security-posture` playbook is required** (2026-07-26): the repo's trust
-   boundaries (what's server-exposed vs build-time), auth chokepoints (where
-   authz is enforced — cited), and the secret-handling convention (where env
-   names are read; names only, per the step-4 guardrail). This is durable
-   KNOWLEDGE, not findings — it grounds bloom's security profile
-   ([rafa-security](../rafa-security/SKILL.md)): reachability annotations on
+   **One `security-posture` playbook is required** (owner 2026-07-26): the repo's
+   trust boundaries (what's server-exposed vs build-time), auth chokepoints
+   (where authz is enforced — cited), and the secret-handling convention (where
+   env names are read; names only, per the step-4 guardrail). This is durable
+   KNOWLEDGE, not findings — it is the flow-trace of the repo's trust surface,
+   and it grounds bloom's security profile
+   ([rafa-security](../rafa-security/SKILL.md)): the reachability annotations on
    CVE rows come FROM this note's map.
 
 7. **Verification & synthesis** — apply the 100× filter (a note earns a file only if it
@@ -246,10 +247,38 @@ subagent it calls in step 1/5. **`init`** = ensure structure idempotently (`.raf
 pipeline; **`--brain-only`** stops after the brain is validated (step 5 PASS) — skips improve
 + push, a cheap knowledge refresh.
 
-1. **Scan — spawn `atlas`** context-isolated: *"Run the scan per this SOP: comprehensive,
-   breadth-before-depth, cited notes → `.rafa/brain/{rules,playbooks}/` + `coverage.md`. Run
-   `npx @rafinery/cli verify-citations` until it **exits 0**. Return a coverage summary only —
-   not the raw reads."*
+0. **RESOLVE THE REAL BRAIN FIRST — mandatory and mechanical (the canonical
+   continuity law, [contract §12.4](../../rafa/contract.md)).** Before ANY scan
+   step, run `npx @rafinery/cli pull --full` — materialize the org brain into
+   `.rafa/` and confirm it sits at the brain remote's HEAD
+   (`git -C .rafa fetch origin && git -C .rafa status`). A stale local `.rafa`
+   (e.g. parked on an old genesis commit) is exactly how a session scans blind
+   and mints a parallel brain (the incident this step exists to prevent — see
+   the anti-patterns). **Founding is PLATFORM truth, never local emptiness**:
+   founding ⇔ the platform serves zero knowledge
+   (`search_knowledge`/`list_improvements` both empty). If ANY notes exist, this
+   is a **REFRESH**, not a founding scan:
+   - **Ids are stable forever.** One concept = one id. atlas UPDATES the
+     existing file in place (content, cites, links); it NEVER mints a new id
+     for a concept an existing note covers.
+   - **Retirement is a TOMBSTONE, never a deletion** (the §2 lifecycle law): set
+     `status: retired` in the existing file and append a dated `## Retired`
+     body section — why it no longer holds, what supersedes it (linked).
+     The file stays as history (excluded from recall by the platform);
+     a state change is never recorded by removing a file.
+   - New ids are for genuinely new concepts only — and each new note names, in
+     its body, why no existing note covers it.
+   - The founding-scan coach offer (step 9) NEVER fires on a refresh.
+1. **Scan — spawn `atlas`** context-isolated. On a REFRESH, the spawn prompt
+   MUST carry the existing inventory: *"REFRESH mode — the org brain is
+   materialized under `.rafa/brain/` (<N> rules · <M> playbooks · <K>
+   improvements). Update in place: ids are stable; never write a new note for
+   a concept an existing note covers; deletions are explicit. Run the scan per
+   this SOP: comprehensive, breadth-before-depth, cited notes →
+   `.rafa/brain/{rules,playbooks}/` + `coverage.md`. Run
+   `npx @rafinery/cli verify-citations` until it **exits 0**. Return a
+   coverage summary only — not the raw reads."* (Founding keeps the same
+   prompt minus the refresh preamble.)
 2. **Gate 1 — checker (trust-but-verify):** re-run `npx @rafinery/cli verify-citations`
    yourself. Must **exit 0** (else re-spawn atlas to fix). It writes `citation-check.md`.
 3. **Gate 2 — prism:** spawn `prism` **context-isolated**, passing ONLY: *"Validate the scan
@@ -344,6 +373,11 @@ The report must state PASS/FAIL **per criterion** (not a summary verdict), so it
 targets the exact failing box.
 
 ## Anti-patterns (do NOT do)
+- **Scan without pulling the real brain (the parallel-brain incident,
+  2026-07-27).** A blind re-scan mints new ids for concepts that already have
+  notes — 28 duplicates against 14 existing notes, zero continuity. Step 0 is
+  mandatory; the reconciler's duplicate guard will CONTEST parallel notes, but
+  contested duplicates are cleanup, not a workflow.
 - Cherry-pick the flashiest seam — the exact failure this capability prevents.
 - Single-file conventions only — the old scan's shallowness.
 - **Inferred / sampled / from-memory citations** — every `file:line` is grep-or-read

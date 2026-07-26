@@ -11,6 +11,14 @@ scope · sensors · capture · the correction reflex · actor/toolbox bootstrap 
 one-line-per-verb map. **Verb-specific procedure lives in the lazily-loaded skill**
 (`.claude/skills/rafa-*/SKILL.md`), loaded only when that verb runs — never restated here.
 
+> **The guarded loop is canon** — [contract §12](../rafa/contract.md) maps every
+> moment (develop · commit · checkpoint · push · merge), signal (dirty · reported
+> overlays · heartbeat · capture-trust), gate (`rafa guard` · compile ·
+> verify-citations · prism), and reconciliation lane (knowledge · improvement ·
+> security · affected sweep · parallel-brain guard · tombstones). When in doubt
+> about capture, continuity, or security behavior, §12 rules; the per-verb SOPs
+> carry the depth.
+
 ## Intent routing — implicit by default, explicit as override
 
 Work verbs dispatch on **prompt intent**; the dev never needs to remember a command.
@@ -91,7 +99,10 @@ Three interaction modes by the weight of the action:
    - work/task complete → *"push the brain so the platform (and your team) see it?"*
    - plan drafted but the dev drifted → *"push this plan to the platform?"*
    - session start, local ahead of platform → *"brain is N commits behind — push?"*
-   - reconciliation pending → *"branch <x> merged with N working-set files — distill now?"*
+   - reconciliation pending → *"branch <x> merged with N working-set files — the PLATFORM
+     reconciles it (agent-native, at the merge); check the Reconciliations tab"* — a status
+     line, NEVER a session-distill offer (the session path is retired; the reconciler is
+     the org brain's only writer)
    - adjudication pending → *"1 file diverged at the <x>→<y> fold — pick a copy?"*
    - staleness (the M5 dirty queue, from the SessionStart digest or `rafa dirty --json` at
      boundaries) → *"N notes cite files you've touched — refresh just those?"* — accepted =
@@ -118,10 +129,10 @@ blocks; keep working, the offer stands · admin verbs stay explicit — an ACCEP
 IS the explicit invocation.
 
 **Bootstrap digest — one question, however much is pending.** Session start may
-accumulate many offers (staleness push, N distills, needs-adjudication flags, dirty
-notes to refresh, N open knowledge gaps via `get_knowledge_gaps`, a nudge). NEVER ask
-them serially — batch into ONE itemized digest:
-*"5 things pending: brain push · 2 merged branches to distill · 1 file needs
+accumulate many offers (staleness push, pending platform reconciliations,
+needs-adjudication flags, dirty notes to refresh, N open knowledge gaps via
+`get_knowledge_gaps`, a nudge). NEVER ask them serially — batch into ONE itemized digest:
+*"5 things pending: brain push · 2 merges reconciling on the platform · 1 file needs
 adjudication · 3 notes cite code you changed · 2 open knowledge gaps — want any now,
 or later?"*
 Dismissible as a unit; offer fatigue trains reflexive yes, which corrodes every consent
@@ -232,10 +243,10 @@ explicitly typed; an ACCEPTED boundary offer counts as the explicit invocation.
 |---|---|---|
 | `plan <intent>` | trio decomposition — atlas drafts brain-grounded contract §7 files (Done-checks), bloom pulls blast-radius improvements, prism validates the plan; approval → compile → `push_plan` + `set_active_plan` | [rafa-plan](../skills/rafa-plan/SKILL.md) |
 | `build` | execute the active plan per item (in `blocked_by` order): atlas recalls+implements → prism gates `status: done` on the `## Done-check` → bloom sweeps the ledger → update file + journals → checkpoint (push_plan/log_decision/`rafa checkpoint`); final verify + clear `active.md` when all children done | [rafa-build](../skills/rafa-build/SKILL.md) |
-| `improve` | spawn bloom → cited, prioritized P0–P3 ledger in `.rafa/improve/`; surface only the top few high-leverage items, never nag. Includes the security profile ([rafa-security](../skills/rafa-security/SKILL.md)): `rafa audit --json` → category:security rows, mechanical priority map, P0 security rows may surface outside the blast radius | [rafa-improve](../skills/rafa-improve/SKILL.md) |
+| `improve` | spawn bloom → cited, prioritized P0–P3 ledger in `.rafa/improve/`; surface only the top few high-leverage items, never nag. Includes the security profile — woven, never a dev verb (contract §12.5) — via [rafa-security](../skills/rafa-security/SKILL.md): `rafa audit --json` → category:security rows, mechanical priority map, P0 security rows may surface outside the blast radius | [rafa-improve](../skills/rafa-improve/SKILL.md) |
 | `scan [--brain-only]` | the full pass know → verify → improve → push — atlas maps → gate-1 checker → prism validates → iterate (max 3) → improve → push on approval → founding-scan coach offer. `--brain-only` stops after validation. The whole conductor orchestration lives in the skill (§ Conductor orchestration). | [rafa-scan](../skills/rafa-scan/SKILL.md) |
 | `init` | first run: ensure `.rafa/active.md` = `# No active plan` (idempotent), then run the full scan pass | [rafa-scan](../skills/rafa-scan/SKILL.md) |
-| `distill [<branch>]` | reconcile a merged branch's working set into the org brain — prism validates each file vs merged MAIN, atlas authors survivors through verify-citations · compile · push, refutes with cites, flags `needs-adjudication`. Offer-driven at bootstrap; CI runs it headlessly. | [rafa-distill](../skills/rafa-distill/SKILL.md) |
+| `distill` | **REMOVED (2026-07-27)** — reconciliation is SERVER-SIDE only (the agent-native reconciler is the org brain's single writer; just merge the PR and watch the Reconciliations tab). There is no session verb and no CI adapter. If a dev types it: explain, point at the platform run. | — |
 | `insights` | spawn compass → bootstrap/refresh the dev's private user brain from their native `/insights` report + recent work; every candidate OFFERED, banked only on yes (`put_dev_insight`). Capture during normal work is §capture's job, not this command. | [rafa-insights](../skills/rafa-insights/SKILL.md) |
 | `leverage` | reason over the committed toolbox (`.claude/settings.json`, `.mcp.json`, `skills/`, `commands/`, the stack) — what's missing/misconfigured/unused; on approval apply the fix EXACTLY (merge permissions, wire an MCP, scaffold a skill). Merge, never clobber; show the diff. The CLI reports, you fix. | [rafa-leverage](../skills/rafa-leverage/SKILL.md) |
 | `sage` | explicit OVERRIDE of the implicit observer pass (below) | [rafa-sage](../skills/rafa-sage/SKILL.md) |
@@ -249,7 +260,7 @@ Devs never type `/rafa sage`. **Trigger — MECHANICAL as of wave 5 (owner
 2026-07-25):** the SessionStart digest computes it — a `[rafa · sage] sage due:
 N loop events…` line (the checkpoint-written loop-event cache vs the learnings
 ledger, compared locally). **When that line is present, spawning sage at the
-next completion boundary — build final-verify · distill close · bootstrap — is
+next completion boundary — build final-verify · reconciliation close · bootstrap — is
 a MUST, not a judgment call**: the line IS the trigger condition already
 evaluated; a discretionary trigger is how sage never fired organically. Spawn
 per [rafa-sage](../skills/rafa-sage/SKILL.md); announce ONE line, proceed; its

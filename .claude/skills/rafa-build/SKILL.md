@@ -18,7 +18,7 @@ platform MCP (one read path — the same surface any third-party agent uses).
 |---|---|---|
 | **Executor** | atlas | RECALL the task's brain slice via MCP (`search_knowledge` + `get_rule`/`get_playbook`; honor non-exemplars) → implement, convention-adherent |
 | **Validator** | prism | validate the execution against the child's `## Done-check` — strict, unbiased, against code + brain, never against atlas's claims. **`status: done` only on prism PASS**; FAIL → atlas corrects (validate-and-correct at work time). **TDD tasks (wave 6): green re-run LIVE; red per tier (standard = attested `method:"static"` · full = re-run at the red commit in a throwaway worktree). Findings carry `Critical (Must Fix) · Important (Should Fix) · Minor (Nice to Have)` — ITERATE iff any Critical/Important; Minor NEVER flips the verdict.** Plan-done adds one line to the verdict: **working set reviewed — captured, or clean-with-reason** (a build that learned nothing SAYS so; a build that learned something SHOWS the files) |
-| **Improver** | bloom | **push**: new improvement opportunities spotted during execution → new ledger files. **close**: improvements fixed in passing → `status: fixed` in the ledger file + `report_improvement_status(id, fixed)` so the platform shows it LIVE as pending-reconciliation (the ledger row itself changes only at the next brain push — K1). **nudge**: top-leverage open item in the task's blast radius — opt-in, never blocking |
+| **Improver** | bloom | **push**: new improvement opportunities spotted during execution → new ledger files. **close**: improvements fixed in passing → `status: fixed` in the ledger file + `report_improvement_status(id, fixed)` so the platform shows it LIVE as pending-reconciliation (the ledger row itself changes only at the next brain push — K1). **nudge**: top-leverage open item in the task's blast radius — opt-in, never blocking. **audit**: a task that touched a lockfile or manifest re-runs the cheap dependency tier (`rafa audit --json`, contract §12.5) and reports the delta in one transparent line — new or cleared findings, never silence; a newly-surfaced critical becomes a `category: security` P0 row now |
 | **Coach** | compass | **sitback** (harness-arc): after each task's verdict + sweep, one beat of reflection — did THIS task reveal something about how this DEV works (a preference, a recurring friction, a steering pattern)? Repo knowledge goes to the working set, never here. A genuine dev-level observation becomes its OWN opt-in offer (consent doctrine: insights are NEVER under session consent) → `put_dev_insight` on yes. No observation = no offer — silence is the honest default |
 
 ## Procedure
@@ -43,11 +43,10 @@ platform MCP (one read path — the same surface any third-party agent uses).
    [rafa-commit](../rafa-commit/SKILL.md) format — `[<task-id>] <type>:
    <subject>` (the id join-key; intent records + the branch manifest lift it
    into per-note provenance)** → prism validates vs `## Done-check` →
-   bloom sweeps (push new / close fixed / nudge; **when THIS task changed a
-   lockfile/manifest, re-run the cheap dependency tier — `rafa audit --json` —
-   and report the delta to the dev in one transparent line: new/cleared
-   findings, never silence**; a new critical → a `category: security` P0 row
-   surfaced now) → update the child file's `status`
+   bloom sweeps (push new / close fixed / nudge; and when THIS task touched a
+   lockfile or manifest, the dependency-tier re-audit + one-line delta fires —
+   bloom's **audit** clause in the trio table above) → update the child file's
+   `status`
    **and append a dated entry to the child's `## Log`** (body links: markdown,
    per [rafa-okf](../rafa-okf/SKILL.md)) — what was done, what was
    decided, what surprised (body prose: displayed verbatim on the platform, never
