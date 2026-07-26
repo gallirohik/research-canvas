@@ -50,7 +50,7 @@ Invoke via `/rafa improve`. The brain (#1) must exist — bloom *uses* it as the
 ## Output (to `.rafa/improve/`)
 
 - `improvements/<id>.md` — one file per improvement (cited, prioritized, status-tracked).
-- `ledger.md` — generated index: counts by priority/lens/status + the **health/debt trend**.
+- `ledger.md` — generated index: counts by priority/category/status + the **health/debt trend**.
   Its **frontmatter carries the machine-read `open` · `debt_score` · `by_priority`** (per
   [`.claude/rafa/contract.md`](../../rafa/contract.md) §5) — the platform reads *that*, never the body tables,
   and `rafa compile` cross-checks `open`/`by_priority` against the actual improvement rows.
@@ -65,7 +65,7 @@ platform shows them; nothing is scraped from prose). Example *illustrative — f
 schemaVersion: 1
 id: rsc-route-level-use-client              # required · kebab = filename stem
 priority: P1                                # required · P0|P1|P2|P3
-lens: architecture                          # required · security|correctness|performance|architecture|product|ops
+category: architecture                      # required · security|correctness|performance|architecture|product|ops (pre-2026-07-26 name `lens` is a deprecated alias)
 status: open                                # required · open|backlog|fixed|wontfix
 title: Route-level "use client" silently disables RSC   # required
 summary: A route-level directive kills RSC down the whole subtree; no gate catches it   # required
@@ -109,9 +109,15 @@ convention — see [RSC client boundary](/brain/rules/rsc-client-boundary.md)). 
      ledger speaks the repo's own language).
    - **The big-bang guard is sovereign** (directive 1): a `Strong` candidate lands as its first
      10-minute slice or a P2 backlog item — never a grand refactor plan.
-3. **Delegate security.** Run `pnpm audit` (dep CVEs). Recommend/run the **`security-review`**
-   skill and semgrep/CodeQL if available. Record *tool* results as improvements; the LLM pass is
-   observational only — never present it as an authoritative audit.
+3. **The security profile.** Run `npx @rafinery/cli audit --json` — the SELF-CONTAINED
+   engine (dep CVEs via the built-in OSV client + pnpm audit; secrets via the built-in
+   ruleset; SAST via semgrep only if present — a tier that didn't run says `ran:false`).
+   Then follow [rafa-security](../rafa-security/SKILL.md): findings → `category: security`
+   rows with the MECHANICAL priority map (critical→P0 · high→P1 · moderate→P2 ·
+   low/dev-only→P3), reachability annotated from the brain's domain map but never
+   downgraded, same-fix CVEs grouped into one row. The LLM pass (authz per route,
+   webhook verification, input validation) is observational only — never present it
+   as an authoritative audit.
 4. **Write improvements.** One file per improvement, cited (`file:line :: token`), prioritized,
    leverage-ranked. **Reconcile** against the existing ledger: dedup; **auto-close** improvements
    whose code is now clean (`status: fixed`); **preserve** the dev's prior triage
@@ -119,7 +125,7 @@ convention — see [RSC client boundary](/brain/rules/rsc-client-boundary.md)). 
 5. **Cite-check (the fidelity gate).** Run
    `npx @rafinery/cli verify-citations --root=.rafa/improve --dirs=improvements`. Every cite
    must resolve; **drop or fix any that don't** — a hallucinated improvement is the cardinal sin.
-6. **Ledger + trend.** Regenerate `ledger.md`: counts by priority/lens/status + a **debt
+6. **Ledger + trend.** Regenerate `ledger.md`: counts by priority/category/status + a **debt
    score** (weighted open improvements) and its trend vs the last run — the compounding made
    visible. Write the machine-read **frontmatter** `open` · `debt_score` · `by_priority`
    ([contract §5](../../rafa/contract.md)) — the platform reads that.
@@ -166,6 +172,11 @@ doing**. When `/plan` or `/build` operate on a region, they query the ledger for
 in that area and nudge once — *"2 P1s here, one's a 10-min fix — take it while you're in?"* —
 ranked by leverage, **dismissible, never blocking.** Not built here; this capability produces
 the ledger the nudge will read.
+
+**The one exception to blast-radius scoping: `category: security` P0s.** A critical
+CVE lives in no file the dev is touching, so a P0 security row may surface at
+plan/build boundaries regardless of region — one line, dismissible, never blocking,
+never re-nagged in the same session.
 
 ---
 

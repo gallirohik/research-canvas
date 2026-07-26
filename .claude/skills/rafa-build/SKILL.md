@@ -43,7 +43,11 @@ platform MCP (one read path — the same surface any third-party agent uses).
    [rafa-commit](../rafa-commit/SKILL.md) format — `[<task-id>] <type>:
    <subject>` (the id join-key; intent records + the branch manifest lift it
    into per-note provenance)** → prism validates vs `## Done-check` →
-   bloom sweeps (push new / close fixed / nudge) → update the child file's `status`
+   bloom sweeps (push new / close fixed / nudge; **when THIS task changed a
+   lockfile/manifest, re-run the cheap dependency tier — `rafa audit --json` —
+   and report the delta to the dev in one transparent line: new/cleared
+   findings, never silence**; a new critical → a `category: security` P0 row
+   surfaced now) → update the child file's `status`
    **and append a dated entry to the child's `## Log`** (body links: markdown,
    per [rafa-okf](../rafa-okf/SKILL.md)) — what was done, what was
    decided, what surprised (body prose: displayed verbatim on the platform, never

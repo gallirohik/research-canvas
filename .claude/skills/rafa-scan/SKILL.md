@@ -201,6 +201,13 @@ retrieval index. Bodies read like a senior engineer explaining that one concept 
 6. **Flow tracing** [LLM, cited] — from each entry point, hop-by-hop to termination
    (render / DB write / response) → `flow` playbooks. Add `how-to` playbooks for the
    recurring "add X" procedures these flows imply.
+   **One `security-posture` playbook is required** (2026-07-26): the repo's trust
+   boundaries (what's server-exposed vs build-time), auth chokepoints (where
+   authz is enforced — cited), and the secret-handling convention (where env
+   names are read; names only, per the step-4 guardrail). This is durable
+   KNOWLEDGE, not findings — it grounds bloom's security profile
+   ([rafa-security](../rafa-security/SKILL.md)): reachability annotations on
+   CVE rows come FROM this note's map.
 
 7. **Verification & synthesis** — apply the 100× filter (a note earns a file only if it
    answers a work-time question AND eliminates a recurring tax), then write the notes. Run
@@ -255,7 +262,8 @@ pipeline; **`--brain-only`** stops after the brain is validated (step 5 PASS) �
    do **not** improve or push (never improve/push an unvalidated brain).
 6. **Improve** *(skip if `--brain-only`)* — run the improve pass ([rafa-improve](../rafa-improve/SKILL.md)):
    spawn `bloom` → `.rafa/improve/`. It reads the *validated* brain as its index, so it only
-   runs after PASS.
+   runs after PASS. The security profile rides this step ([rafa-security](../rafa-security/SKILL.md):
+   `rafa audit --json` → category:security rows) — every scan carries it; no separate command.
 7. **Prove it — the measured benchmark** *(skip if `--brain-only`; skip if
    `.rafa/benchmark.json` already carries `measured: true` for this repo)* —
    the proof engine is WORKFLOW-WOVEN, never a dev-typed command (owner
