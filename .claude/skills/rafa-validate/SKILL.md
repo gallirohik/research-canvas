@@ -86,9 +86,21 @@ agent. So:
    (it violates the net-positive law: a wrong note is worse than none).
 8. **Connectivity** — orphan notes, dangling links (the checker's LINKS warn lane —
    `citation-check.md` § Links — is your pre-built worklist), literal `[[...]]` in prose → minor.
+9. **Continuity — the parallel-brain check (REFRESH scans only; contract §12.4).** A refresh
+   MUST update the existing brain in place, never re-derive a differently-named twin over
+   concepts the org already carries. Detect it: for each note/improvement the scan ADDED
+   (not in the prior brain), check whether an existing note in the same `domain`/`category`
+   already covers the concept — same/near-equal `title`, or ≥50% shared cited files. A new id
+   that duplicates an existing concept is a **BLOCKER** (continuity is the product: a parallel
+   brain orphans triage, resets trends, and destroys id stability). Ground it against the prior
+   brain: compare the scan's output ids to the pre-scan manifest; every genuinely-new id must
+   name, in its body, why no existing note covers it. (This is the validation twin of the
+   reconciler's deterministic parallel-brain guard — prism catches at scan-time what the guard
+   catches at merge-time; a founding scan, with no prior brain, is exempt.)
 
 ## Severity + decision
-- **Blocker** — hard-gate failure, broken checker, or a wrong/misleading note. Must be **0**.
+- **Blocker** — hard-gate failure, broken checker, a wrong/misleading note, or a refresh that
+  minted parallel ids over existing concepts (continuity, step 9). Must be **0**.
 - **Major** — a real gap: missing essence, under-covered domain, unanswerable question.
 - **Minor** — nits (orphan, cosmetic). Logged, not looped on.
 - **PASS** = hard gates pass · quality score ≥ 85 · 0 blockers · majors ≤ 2 · **and no
