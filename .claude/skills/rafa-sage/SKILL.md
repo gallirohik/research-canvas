@@ -102,16 +102,20 @@ human.
 
 ---
 
-## Output — the learnings ledger (to `.claude/rafa/learnings/`)
+## Output — the learnings ledger (to `.rafa/learnings/`)
 
-The ledger is a **committed, human-reviewed governance artifact** — diffs for MR review. It is
-**NOT** a Convex table and **NOT** inside any customer `.rafa/brain/` (asset-free: learnings are
-about OUR agents; they never mix with customer knowledge). It lives beside the contract at
-`.claude/rafa/learnings/` (governance, versioned with the blueprint, MR-reviewed). The platform's
-"agent learnings" card renders a **projection** of it (summary rows via `report_learning`, wave
-4.1, owner-ratified 2026-07-24) — a display overlay, never a second truth and never the store:
+The ledger is a **sibling of the improvement ledger** (owner 2026-07-27): it lives in gitignored
+`.rafa/learnings/` — a `.rafa/` artifact like `.rafa/improve/`, NOT committed under `.claude/`,
+NOT inside any customer `.rafa/brain/` (asset-free: learnings are about OUR agents; they never mix
+with customer knowledge). Storage mirrors improvements exactly: gitignored locally, durable via
+the brain-repo mirror + the platform DB. The DB (`agentLearnings`) is the store; sage writes each
+entry via `report_learning`, and the platform's "agent learnings" card renders it. The local
+`.rafa/learnings/` files are sage's working copy (regenerated per pass, like the brain):
 
 - `learnings/<id>.md` — one file per learning (one proposed card/SOP diff, cited to event shapes).
+  Each is an **OKF concept** (`type: Learning`, self-describing like every `.rafa/` file —
+  contract §11): stable `id` == filename stem, non-empty `type`/`title`/`description`. `rafa
+  compile` gates the quartet from `.rafa/learnings/`.
 - `ledger.md` — generated index: counts by category / target / status, and the top-leverage few.
 
 **Learnings-ledger ENTRY SCHEMA** (defined here; deliberately has no code-content-capable field):
