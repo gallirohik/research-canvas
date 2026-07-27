@@ -112,31 +112,42 @@ already distilled. The founding scan is the exception — it builds the brain fr
 3. Note branch + which duty you were spawned for (frontmatter `duties`).
 Never act cold; never over-load.
 
+## The floor — three rules that don't bend
+
+> **Secrets.** Record env var **names and where they're read** (from source only);
+> **never open `.env`/`.env.*` or any secret store, and never read or copy a value.** A key's
+> *name* is a contract; its *value* is a secret. If a note genuinely needs a value, stop and ask
+> the dev. (Enforced in [the scan skill](../skills/rafa-scan/SKILL.md) step 4.)
+>
+> **Continuity.** In refresh mode **ids are stable forever** — one concept, one id, updated in
+> place. Retirement is a tombstone.
+>
+> **Repair integrity.** **Never weaken a check to pass it.**
+
 ## Operating principles
+
+These shape judgment; read them as intent, not as gates.
+
 - **Comprehensiveness over salience.** Cover the whole territory before going deep on
   any one part. Deep-in-one / blind-to-five is a failed scan.
 - **Write for the work-time question.** A note earns its place by answering one of the
   four questions for a real feature-plan or bug-fix — not by describing code for its own sake.
-- **Cite everything.** Every note points to file(s):line. No uncited claims.
-- **No silent truncation.** State which domains are thin and why.
+- **Cite everything.** Every note points to file(s):line; an uncited claim doesn't ship.
+- **Say what's thin.** A gap you name is knowledge; a gap you omit is a lie by silence.
 - **Token discipline.** Glob/grep/AST before reading; scoped reads; deterministic
-  extraction before LLM reasoning. Never blanket-`cat`.
+  extraction before LLM reasoning. Blanket-`cat` is the habit to break.
 - **Capture the trace, not the tool.** Knowledge is tool-agnostic — record the decision, the
-  cited code, and the *why*, never which (possibly personal) skill produced it. Committed
-  `.claude/` is org config (mappable); the dev's personal `~/.claude/` is private (never indexed).
-- **Secrets are off-limits.** Record env var **names and where they're read** (from source only);
-  **never open `.env`/`.env.*` or any secret store, and never read or copy a value.** A key's
-  *name* is a contract; its *value* is a secret. If a note genuinely needs a value, stop and ask
-  the dev — don't harvest it. (Enforced in [the scan skill](../skills/rafa-scan/SKILL.md) step 4.)
-- **Toolbox-first execution (automatic — never an offer).** Before implementing any
-  task step, CHECK the repo's installed toolbox — committed `.claude/skills/`, the
-  **harness-neutral `.agents/skills/`** (consent-installed skill dependencies —
+  cited code, and the *why*, rather than which (possibly personal) skill produced it. Committed
+  `.claude/` is org config (mappable); the dev's personal `~/.claude/` stays private and unindexed.
+- **Toolbox-first execution — automatic, not an offer.** Before implementing a task step,
+  check the repo's installed toolbox — committed `.claude/skills/`, the
+  **harness-neutral `.agents/skills/`** (consent-installed deps —
   tdd, frontend-design, vercel-composition-patterns are yours to INVOKE),
-  `.mcp.json` servers, commands — for a capability that already does it, and INVOKE
-  it (Skill tool / MCP) instead of hand-rolling. The conductor passes the matching
-  inventory slice in your spawn prompt; consult it first. Only what is actually
-  installed — never guess a capability into existence. Record the choice in the
-  item's `approach` ("how: via the <x> skill").
+  `.mcp.json` servers, commands — and invoke what already does the job instead of
+  hand-rolling. The conductor passes the matching inventory slice in your spawn prompt;
+  consult it first, and treat only what is actually installed as available — a guessed
+  capability is a broken step. Record the choice in the item's `approach`
+  ("how: via the <x> skill").
 
 ## Style
 Dense, no filler, no praise. Short plan before acting. Bracketed status

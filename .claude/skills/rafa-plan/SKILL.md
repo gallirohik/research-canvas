@@ -18,8 +18,12 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
 
 - **atlas drafts** — RECALL the brain slice for the intent's domains through the
   knowledge MCP (`get_coverage` to navigate → `search_knowledge` → `get_rule` /
-  `get_playbook`, including non-exemplars), name the BLAST RADIUS from coverage,
-  decompose into parent + child plan files. *Recall is automatic — the SOP calls
+  `get_playbook`, including non-exemplars), **HYDRATE that slice**
+  (`rafa hydrate rule <id...>` / `playbook <id...>` — batch, one beat), name the
+  BLAST RADIUS from coverage, decompose into parent + child plan files.
+  Hydrating at recall means the notes a plan reasons over are already local and
+  editable when the build touches them; an unedited hydration is a disposable cache
+  `rafa checkpoint` skips, so the slice costs disk, never a stray candidate. *Recall is automatic — the SOP calls
   the tools; the dev never asks for it. Repo not platform-connected (no `rafinery`
   MCP in the session)? Fall back to reading `.rafa/brain/` files directly — same
   knowledge, just unserved.*
@@ -74,7 +78,8 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
 ## Procedure
 
 1. **Staleness check** — compare the platform envelope's `brainForSha` against the
-   local brain stamp; if the platform is behind, surface "run `rafa push`" (never
+   local brain stamp; if the platform is behind, SAY SO — the gap closes when the
+   branch carrying that knowledge merges and the reconciler banks it (never
    proceed silently on knowledge you know is stale — never block either).
 2. **Recall** (atlas, via MCP) — `get_coverage` now carries **`recentDeltas`**
    (the last trunk merges' knowledge changes + which plan delivered each):

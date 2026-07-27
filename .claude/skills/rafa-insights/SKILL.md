@@ -27,7 +27,7 @@ ship."* Consent means informed.
 
 ## The boundary (both directions, no exceptions)
 - Nothing **code-cited** enters the user brain (code facts → the branch working set →
-  org brain via distillation).
+  org brain via reconciliation).
 - Nothing **person-scoped** leaves it — not to teammates, not to repo activity
   feeds, not to aggregates without explicit standing consent. This floor is
   enforced in the platform dispatch, not just here.

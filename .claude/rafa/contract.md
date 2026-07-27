@@ -47,7 +47,7 @@ doesn't validate, compile fails.
 | improvement           | `improve/improvements/*.md`       | **structured**                                                                                                                     | §3                                                                                                                                                            | bloom      |
 | ledger                | `improve/ledger.md`               | **structured**                                                                                                                     | §5                                                                                                                                                            | bloom      |
 | plan                  | `plans/**/*.md`                   | **structured**                                                                                                                     | §7                                                                                                                                                            | plan/build |
-| reconciliation report | `brain/reconciliations/*.md`      | **structured** (validated, NOT in the manifest — travels on the brain-repo transport, like plans)                                  | `run` (merge sha) · `outcome` ∈ `succeeded`\|`needs-attention`\|`superseded` · `tier` ∈ `canonical`\|`provisional`; refutation/deletion records ride INSIDE (body sections — one class); minted via `rafa okf new reconciliation-report` | distiller  |
+| reconciliation report | `brain/reconciliations/*.md`      | **structured** (validated, NOT in the manifest — travels on the brain-repo transport, like plans)                                  | `run` (merge sha) · `outcome` ∈ `succeeded`\|`needs-attention`\|`superseded` · `tier` ∈ `canonical`\|`provisional`; refutation/deletion records ride INSIDE (body sections — one class); minted via `rafa okf new reconciliation-report` | reconciler |
 | log                   | `brain/log.md`                    | **verbatim**                                                                                                                       | — (prose trail; OKF-reserved name, §11)                                                                                                                       | conductor  |
 | index                 | `**/index.md`                     | **generated**                                                                                                                      | — (OKF §6 listings, by `rafa okf`; the ROOT index alone carries frontmatter: `okf_version` + provenance)                                                      | tool       |
 | citation-check        | `**/citation-check.md`            | **generated**                                                                                                                      | — (by `rafa verify-citations`; self-describing frontmatter, §11)                                                                                              | tool       |
@@ -472,15 +472,27 @@ imported comments are never scraped into decisions.
   fields do NOT bump it** — e.g. the note size stamps (`bodyTokens`,
   `cites[].targetTokens`, §1): ingest tolerates their absence, so a legacy manifest
   without them stays valid at the same `schemaVersion`.
-- **The reconciliation schema ladder (0.11.0 — owner's 4-case doctrine).** When a
-  version bump DOES ship, distillation is the upgrade moment — the reconciler
+- **The reconciliation schema ladder (0.11.0 — owner's 4-case doctrine).**
+  **STATUS: resolution IMPLEMENTED · transforms PENDING a real delta**
+  (`packages/cli/lib/schema-ladder.mjs`, 2026-07-27). The routing, the abort,
+  class resolution and the registry's loud failures all hold and are pinned by
+  test. What is NOT written is any v1→v2 transform, because none can be until a
+  format change exists — step 1→2 is registered as an EXPLICIT `"unchanged"` for
+  every class, which is the honest statement of today rather than an absent entry
+  (an absent entry fails loudly, by design).
+  **Bumping `SCHEMA_VERSION` is therefore still a two-part act:** register the
+  step's transforms for the classes it touches, THEN bump. Bumping alone
+  invalidates every existing note at once — the gate, checkpoint and the
+  reconciler's validate-don't-stamp guard all refuse a mismatch in unison. When a
+  version bump DOES ship, the merge is the upgrade moment — the reconciler
   resolves target-vs-source-vs-runner before judging: target below source → full
   target rewrite onto the newer schema; source below target → incoming candidates
   lift before judging; both equal-but-old → the merged target rewrites onto the
   runner's latest; both current → plain diff (today). Either side newer than the
   runner → **abort loudly** (update the runner; knowledge is never downgraded).
-  Transforms are registered per step AND per OKF type in the CLI
-  (`lib/distiller/schema-ladder.mjs`): each step declares rule · playbook · improvement
+  Transforms are registered per step AND per OKF type in
+  `packages/cli/lib/schema-ladder.mjs` (the CLI owns it so both the gate and the
+  reconciler import one ladder): each step declares rule · playbook · improvement
   explicitly — a function, or the EXPLICIT `"unchanged"` (still re-stamps the note's
   `schemaVersion:`); an unregistered step or class fails loudly — the ladder never
   guesses a schema. Class resolves by CHAIN: the governed directory first (inside the
@@ -583,7 +595,7 @@ mint the replacement, update the configs (settings.local.json · credentials.jso
 CI secrets), then revoke the old at leisure; revoke stays an immediate kill (a
 security act, never graced). A live session holds its connect-time key — reconnect
 the rafinery MCP server (or restart the session) after swapping; the CLI tools
-(checkpoint · hydrate · distill) resolve credentials fresh per invocation and are
+(checkpoint · hydrate) resolve credentials fresh per invocation and are
 never stale. Keys are stored hashed platform-side and live client-side in
 `~/.config/rafinery/credentials.json` — never inside the code repo or this brain repo.
 
@@ -604,19 +616,19 @@ state**, marked by `envelope.plane: "state"`:
 | -------------------------------------------------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `list_dev_insights` / `put_dev_insight` / `remove_dev_insight`                         | **user brain** — account-scoped, cross-repo, PRIVATE    | consent-gated by the conductor; never logged to repo activity; nothing person-scoped is ever served to another user                                                                                                                                                                                                                                                  |
 | `checkpoint_sync`                                                                      | **branch working set** — (repo, branch, file path) rows | pushes edited/new brain files from the lazy `.rafa/` instance at CHECKPOINTS (task done · plan approved · explicit ask · cadence · git push/pull — never session-end) under **base-version CAS**: each file carries the row `version` last seen (null = create); a stale base returns the newer copy as a per-file conflict for the HUMAN in that session to resolve |
-| `get_working_set`                                                                      | branch working set                                      | hydration (a session starts with its branch's working set), the branch view, distillation collect; `needs-adjudication` rows carry the incoming copy in `pending`                                                                                                                                                                                                    |
-| `resolve_working_file`                                                                 | branch working set                                      | `distilled` / `refuted` (+ cited note) at merge-to-main distillation; `keep-current` for adjudication decisions; CAS on status — a racing distill fails loudly                                                                                                                                                                                                       |
+| `get_working_set`                                                                      | branch working set                                      | hydration (a session starts with its branch's working set), the branch view, reconciliation collect; `needs-adjudication` rows carry the incoming copy in `pending`                                                                                                                                                                                                    |
+| `resolve_working_file`                                                                 | branch working set                                      | `distilled` / `refuted` (+ cited note — both are STORED wire values, kept across the rename) at merge-to-main reconciliation; `keep-current` for adjudication decisions; CAS on status — a racing reconcile fails loudly                                                                                                                                                                                                       |
 | `fold_working_set`                                                                     | branch working set                                      | branch→parent-branch MECHANICAL fold (no LLM, no prism — rigor only at main): absent → re-keyed · identical → merged · divergent → `needs-adjudication` on the parent row                                                                                                                                                                                            |
 | `push_plan` / `list_plans` / `update_plan_status` / `set_active_plan` / `log_decision` | **plans** — (repo) work objects                         | the push-on-approval channel (§7 v2): approval pushes the whole work-item TREE (items[], bodies stored); `list_plans` = names only; statuses push back (5-value enum — blocked is derived); `log_decision` records the deliberation trail (paraphrase + pivotal quotes); the active pointer is explicit, never inferred                                              |
 | `patch_plan_item`                                                                       | plans (one item)                                        | wave 5.2 — field-level patch on ONE item (no full-tree resend): provided fields replace, absent stay; CLEARING a field and any STRUCTURE change (kind/parent/add/remove/domains/external/merged) remain `push_plan`-only, so "a vanished optional field must not survive" keeps holding at tree granularity; snapshot-before-change rides noteRevisions like a re-push |
 | `checkpoint_task`                                                                       | plans + loopEvents + planDecisions (**ONE transaction**) | wave 5.2 — the ONE-beat boundary write: optional item patch + the loop-event ruling + decision records land atomically (all-or-nothing; `mcp.call` is an action, so composing the separate tools can never be atomic — this is one internalMutation). Idempotent end-to-end (patch no-ops on same values · loop event dedupes on `dedupeKey` · decisions dedupe on client-stable ids). The embedded loopEvent obeys `report_loop_event`'s exact rules — one rulebook, no side door. `checkpoint_sync` stays separate: per-file CAS partial-accept is a different failure model than an atomic beat |
 | `report_improvement_status`                                                            | **events only** — no store                              | a LIVE session signal (bloom's fixed-in-passing during build). The improvement ledger row is untouched — it has ONE writer, the ingest (K1); the platform overlays the report as pending-reconciliation until the next brain push confirms it                                                                                                                        |
-| `reconcile_claim`                                                                      | **reconciliations queue** — (repo) run rows            | executor claim (`plane:"state"`): ACID no-running-sibling assert → returns the attempt token; delegates to `reconciliations.claim`; stamps the actor envelope `{model, agent, runner}` (runner ∈ `sandbox`\|`ci`\|`session`, enum-checked at the boundary) on the row                                                                                          |
+| `reconcile_claim`                                                                      | **reconciliations queue** — (repo) run rows            | executor claim (`plane:"state"`): ACID no-running-sibling assert → returns the attempt token; delegates to `reconciliations.claim`; stamps the actor envelope `{model, agent, runner}` (runner ∈ `platform`\|`ci`\|`session` (+ `sandbox`, deprecated wire value), enum-checked at the boundary) on the row                                                                                          |
 | `reconcile_heartbeat`                                                                   | reconciliations queue                                   | extends the wall-clock lease + sets the phase; **attempt-fenced** (a non-current attempt is rejected, nothing written); actor envelope re-stamped                                                                                                                                                                                                                    |
 | `reconcile_log_append`                                                                  | **reconciliationLogs** — the run log tail               | batched chunks, **secret-screened PER LINE** (the same `looksLikeSecret` screen — a credential chunk is rejected by chunk/line index, nothing stored or echoed) + **attempt-fenced**; `seq`-ordered; UNLOGGED (emits its own `reconcile.log` event, counts only)                                                                                                       |
 | `reconcile_report`                                                                      | reconciliations queue (+ knowledge node on success)     | terminal outcome + node delta + meter; **attempt-fenced**; success COMPOSES the pointer advance atomically (insert node + move pointer, one mutation); refutation/deletion ride the success outcomes; actor envelope stamped                                                                                                                                          |
 | `list_working_sets`                                                                     | branch working set (**READ**)                           | enumerates branches with LIVE candidate rows + counts only (no bodies) — closes the 07-14 sensor gap (`get_working_set` needs a branch arg; nothing listed them); feeds the SessionStart digest pending line                                                                                                                                                         |
-| `report_loop_event`                                                                     | **loopEvents** — the loop-outcome ledger (sage's evidence) | ONE structured outcome per ruling, shapes only (enum category + per-category enum outcome + `subject` shape ref, secret-screened). Wave 5 trust plane, STRICT (no legacy path): **required actor envelope** `{model, agent, runner ∈ sandbox\|ci\|session}` (mechanical CLI emits use `model:"mechanical"`); **required `verification {method: static\|live, tool?, evidence?}`** on `prism-verdict`/`gate-result`/`review-verdict` — the static-vs-executed distinction is structural, never prose; optional `dedupeKey` (≤120) makes the emit **idempotent** (same `(repo, key)` never lands twice — response says `deduped`) and `tier ∈ light\|standard\|full` records the §7 `validation_tier` the ruling ran at |
+| `report_loop_event`                                                                     | **loopEvents** — the loop-outcome ledger (sage's evidence) | ONE structured outcome per ruling, shapes only (enum category + per-category enum outcome + `subject` shape ref, secret-screened). Wave 5 trust plane, STRICT (no legacy path): **required actor envelope** `{model, agent, runner ∈ platform\|ci\|session, + deprecated sandbox}` (mechanical CLI emits use `model:"mechanical"`); **required `verification {method: static\|live, tool?, evidence?}`** on `prism-verdict`/`gate-result`/`review-verdict` — the static-vs-executed distinction is structural, never prose; optional `dedupeKey` (≤120) makes the emit **idempotent** (same `(repo, key)` never lands twice — response says `deduped`) and `tier ∈ light\|standard\|full` records the §7 `validation_tier` the ruling ran at |
 | `get_loop_events`                                                                       | loopEvents (**READ**)                                   | newest-first shape read (optional category filter, limit ≤500): category/outcome/subject + actorMeta/verification/dedupeKey/tier + at — no bodies, no code; sage splits miss patterns by verification method, actor, and tier                                                                                                                                          |
 | `report_learning`                                                                       | **agentLearnings** — the learnings STORE                | sage ONLY: stores one learning (local copy in `.rafa/learnings/<id>.md`, the gitignored ledger sibling; the DB row is the durable truth the platform renders). Asset-free ENFORCED server-side: enum status/leverage/categories, `.claude/`-only diff TARGET (the card/SOP a learning proposes to change), length caps, code-fence + secret screens; upsert by id                                                                                                          |
 
@@ -682,13 +694,31 @@ Knowledge Format v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/
 is the interchange **floor** of everything rafa generates (pinned ONCE as
 `OKF_VERSION` in `@rafinery/okf` — machine surfaces interpolate it, never
 re-declare it); this contract stays the strict **ceiling**. The protocol in one sentence: *if rafa writes a `.md`,
-it is a valid OKF concept — frontmatter, `type`, markdown links, cited — and a
-pushed brain repo IS a conformant OKF v0.1 bundle any foreign consumer can read
-without rafa tooling.* The format machinery is the `@rafinery/okf` package
+it is a valid OKF concept — frontmatter, `type`, markdown links, cited.* The
+format machinery is the `@rafinery/okf` package
 (strict parser · concept primitives · links · citations · indexes · validator ·
 generator); the gate, the emitter, and the platform all parse through it.
 
-**The emit step (`rafa okf`, run inside `rafa push` BEFORE the gates so its
+**Two levels, and only one is enforced today (status, 2026-07-27):**
+
+- **FILE level — ENFORCED.** Every generated `.md` self-describes and validates
+  against its declared file type. `rafa okf check` is the gate, and it runs
+  **client-side and blocking inside `rafa checkpoint`** — output is proven before
+  it leaves the machine, where the fix is cheapest. This is the level that
+  protects knowledge quality, and it is what every agent's `okf-surface` duty
+  bar refers to.
+- **BUNDLE level — RESERVED, not wired.** The stronger claim — that a pushed
+  brain repo is a conformant OKF v0.1 bundle a foreign consumer can read with no
+  rafa tooling, reaching any concept from the root in ≤ 2 hops — requires the
+  emit's bundle half (the `index.md` tree, the root `okf_version` + provenance
+  block). That emit has **no caller on the live path**: it ran inside `rafa push`,
+  which was retired 2026-07-20 (Doctrine A), and was never rehomed. Do not read
+  the bundle guarantee as current. When a foreign-consumer requirement is real,
+  the emit belongs wherever the bundle is assembled — the reconciler, the org
+  brain's only writer.
+
+**The emit step (`rafa okf` — historically run inside the retired `rafa push`,
+BEFORE the gates so its
 output is validated like any authored file):**
 
 - **Stamps** — missing `type` / `title` / `description` / `timestamp` / `tags`
@@ -783,6 +813,33 @@ whose default is `develop`/`release`/anything is guarded identically. Feature→
 feature merges and feature→prod merges both fire the affected sweep and the
 parallel-brain guard against that repo's real trunk manifest.
 
+### 12.1a The branch-provenance signal — did an agent work this cut?
+
+The branch manifest (`rafa manifest`, written at every mirrored commit) carries a
+top-level `provenance` block:
+
+```jsonc
+"provenance": {
+  "agentCommits": 3,                       // count — the cheap read
+  "commitsCovered": ["<shortsha>", "…"],   // present only when > 0; auditable against git
+  "lastAgentRun": { "at": "…", "codeSha": "…", "actor": { model, agent, runner } }
+}
+```
+
+**Absence IS the signal.** No `lastAgentRun` means no agent touched this branch, which
+is a DIFFERENT state from "an agent worked but capture broke" — the two arrive at the
+reconciler identically (zero candidates) and need opposite responses: broken capture
+wants the affected sweep (§12.3 — RE-GROUND notes that already exist), no-agent wants
+COLD GENERATION (author notes for code nothing describes yet). A dev who commits,
+pushes and merges without ever invoking an agent must still grow the brain.
+
+**An ABSENT manifest fails loudly** — it is never read as "nothing changed". Loud here
+means *named and routed*: the reconciler records the missing-manifest state and takes
+the cold-generate path, because a repo whose hooks were never installed is exactly when
+that path matters most. Silently treating it as up-to-date is the one forbidden reading.
+
+Additive + optional, so `schemaVersion` stays 1 (§8).
+
 ### 12.2 The signals (computed, never self-reported promises)
 
 - **dirty queue** — touched code files → citing notes (local manifest), the
@@ -821,8 +878,9 @@ parallel-brain guard against that repo's real trunk manifest.
 - **security lane** — deterministic, LLM-free, dependency tier: lockfile at the
   merge sha (any manager, §12.5) → OSV → a `securityReports` row. NEVER
   load-bearing: every failure is `ran:false + reason` in the step timeline.
-- The org brain has ONE writer — this reconciler. The session-distill verb is
-  retired; `rafa distill --headless` (org-CI, own key) is the sole other adapter.
+- The org brain has ONE writer — this reconciler: an `@rafa` run on the
+  LangGraph runtime (the E2B/Docker sandbox executor was removed with the
+  distill surface). There is no session verb and no CI adapter.
 
 ### 12.4 Continuity laws (scan · improve · every pass)
 
