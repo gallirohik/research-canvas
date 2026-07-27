@@ -11,6 +11,11 @@ import { copilotkitEmitState } from "@copilotkit/sdk-js/langgraph";
 
 const RESOURCE_CACHE: Record<string, string> = {};
 
+// chat_node injects every resource's full text into the system prompt on each
+// turn, so an uncapped page can push a single request past the model's per-minute
+// token limit — and a request that large can never succeed, however long you wait.
+const MAX_RESOURCE_CHARS = 8000;
+
 export function getResource(url: string): string {
   return RESOURCE_CACHE[url] || "";
 }
@@ -34,7 +39,11 @@ async function downloadResource(url: string): Promise<string> {
     }
 
     const htmlContent = await response.text();
-    const markdownContent = htmlToText(htmlContent);
+    const text = htmlToText(htmlContent);
+    const markdownContent =
+      text.length > MAX_RESOURCE_CHARS
+        ? `${text.slice(0, MAX_RESOURCE_CHARS)}\n\n[truncated]`
+        : text;
     RESOURCE_CACHE[url] = markdownContent;
     return markdownContent;
   } catch (error) {
