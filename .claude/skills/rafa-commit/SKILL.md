@@ -40,7 +40,7 @@ description: "rafa SOP — generate the commit message with the id join-key: the
 
 A subject-only commit is a broken contract here. The next reader of this
 message is most often an AGENT — ours (atlas recalling why a line exists, the
-distiller judging a claim against this change, sage reading shapes) or a
+reconciler judging a claim against this change, sage reading shapes) or a
 foreign one — so the body must be SELF-CONTAINED and joinable:
 
 - **What, concretely** — the surfaces/behaviors that changed, named (not

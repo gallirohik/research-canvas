@@ -108,29 +108,14 @@ file, finds nothing, and stops trusting the brain. So fidelity is non-negotiable
   repo has outgrown. Compute the count FROM the same `git ls-files` command — never from
   memory of the tree.
 
-**Note format.** The **strict contract is [`.claude/rafa/contract.md`](../../rafa/contract.md) §2** — every
-required field there is mandatory and `rafa compile` (Step 7) **rejects** any violation with a
-`path · field · rule` error you must fix. Machine-read fields live in frontmatter; the body is
-prose (never parsed). The example is *illustrative — a contract from the rafa reference repo*:
-```markdown
----
-schemaVersion: 1
-id: starter-agent-name-contract          # required · kebab slug = filename stem = link target
-title: The "starterAgent" name is a 4-place contract    # required
-summary: One string wires the agent across 4 sites; a mismatch silently never connects   # required
-type: contract                            # required · rules/: convention|contract · playbooks/: flow|how-to
-domain: web-agent-bridge                  # required
-links: [copilotkit-frontend-action-routing, agent-tool-to-ui-flow]   # optional · machine-read graph edges
-anchor: starterAgent                      # contracts: EVERY code occurrence must be a cited site (B2)
-cites:                                    # required ≥1 · `file:line :: token` — verify-citations checks each
-  - apps/agent/langgraph.json:6 :: "starterAgent"
-  - apps/web/app/layout.tsx:55 :: agent="starterAgent"
-failure: silent                           # contracts only: silent|loud
----
-The string must match across all four sites or the agent silently never connects.
-See [frontend action routing](/brain/rules/copilotkit-frontend-action-routing.md)
-and [agent tool → UI flow](/brain/playbooks/agent-tool-to-ui-flow.md).
-```
+**Note format.** The strict contract is [`.claude/rafa/contract.md`](../../rafa/contract.md) §2.
+Don't author a note from memory of its shape — `rafa okf new rule <id> --type=… --domain=…
+--cite="file:line :: token"` mints a conformant skeleton, and `rafa compile` (Step 7) rejects
+any violation with a `path · field · rule` error naming exactly what to fix. The generator and
+the gate ARE the format spec; a hand-copied example is a fourth copy that drifts.
+
+Machine-read fields live in frontmatter; the body is prose, never parsed.
+
 `summary` is the one-line the platform shows; **`links` in frontmatter** are the machine-read
 graph edges (body links are for human + foreign-agent reading). `cites` + `domain` + `links` are the
 retrieval index. Bodies read like a senior engineer explaining that one concept to a teammate.

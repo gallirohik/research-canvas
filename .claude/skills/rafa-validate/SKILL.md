@@ -36,7 +36,7 @@ agent. So:
    heartbeat lands. Doctor failing is NOT a brain blocker (the brain may still be
    faithful) — record it as a named finding in the checklist's health notes with
    doctor's own fixes as the next steps; the dev must see a dead capture chain in the
-   report card, not discover it at the next empty distill.
+   report card, not discover it at the next empty reconciliation.
 1. **Re-run the checker yourself** — `npx @rafinery/cli verify-citations`. Record exit
    code + counts (resolution / completeness / policy / **absence / inventory** — checker
    v2 mechanizes the 2026-06-08 ratchet: declared `absent:` tokens re-grepped, coverage

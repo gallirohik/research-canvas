@@ -16,15 +16,39 @@ platform MCP (one read path — the same surface any third-party agent uses).
 
 | Role | Agent | Job per task |
 |---|---|---|
-| **Executor** | atlas | RECALL the task's brain slice via MCP (`search_knowledge` + `get_rule`/`get_playbook`; honor non-exemplars) → implement, convention-adherent |
+| **Executor** | atlas | RECALL the task's brain slice via MCP (`search_knowledge` + `get_rule`/`get_playbook`; honor non-exemplars) → **HYDRATE that slice** (`rafa hydrate rule <id...>` / `playbook <id...>`) → implement, convention-adherent |
 | **Validator** | prism | validate the execution against the child's `## Done-check` — strict, unbiased, against code + brain, never against atlas's claims. **`status: done` only on prism PASS**; FAIL → atlas corrects (validate-and-correct at work time). **TDD tasks (wave 6): green re-run LIVE; red per tier (standard = attested `method:"static"` · full = re-run at the red commit in a throwaway worktree). Findings carry `Critical (Must Fix) · Important (Should Fix) · Minor (Nice to Have)` — ITERATE iff any Critical/Important; Minor NEVER flips the verdict.** Plan-done adds one line to the verdict: **working set reviewed — captured, or clean-with-reason** (a build that learned nothing SAYS so; a build that learned something SHOWS the files) |
 | **Improver** | bloom | **push**: new improvement opportunities spotted during execution → new ledger files. **close**: improvements fixed in passing → `status: fixed` in the ledger file + `report_improvement_status(id, fixed)` so the platform shows it LIVE as pending-reconciliation (the ledger row itself changes only at the next brain push — K1). **nudge**: top-leverage open item in the task's blast radius — opt-in, never blocking. **audit**: a task that touched a lockfile or manifest re-runs the cheap dependency tier (`rafa audit --json`, contract §12.5) and reports the delta in one transparent line — new or cleared findings, never silence; a newly-surfaced critical becomes a `category: security` P0 row now |
 | **Coach** | compass | **sitback** (harness-arc): after each task's verdict + sweep, one beat of reflection — did THIS task reveal something about how this DEV works (a preference, a recurring friction, a steering pattern)? Repo knowledge goes to the working set, never here. A genuine dev-level observation becomes its OWN opt-in offer (consent doctrine: insights are NEVER under session consent) → `put_dev_insight` on yes. No observation = no offer — silence is the honest default |
 
 ## Procedure
 
+**Recall HYDRATES — thinking includes having the material present.** Recall is not
+just a read into context: the slice it returns is pulled to disk in the same beat
+(`rafa hydrate <kind> <id...>`, batch). Two reasons this is the default rather than a
+later step:
+
+- **Editability without a remembered step.** Knowledge learned mid-task has to land
+  in a FILE to survive (the branch working set). If the note is only in context, the
+  agent must remember to hydrate before editing — an SOP line, and this loop's whole
+  doctrine is that a step which must not be skipped cannot be an SOP line.
+- **Local-first is already the rule.** [rafa-review](../rafa-review/SKILL.md) states
+  it: a note already hydrated under `.rafa/brain/**` is read FROM DISK — no MCP
+  round-trip, no double-serving. Recall-hydrates makes that the normal case instead
+  of a lucky one.
+
+Safe by construction: an unedited hydration is a **disposable cache**
+(`isDisposableHydration`) that `rafa checkpoint` skips, so a wide slice costs disk,
+never a spurious working-set candidate. The bound is the search limit — hydrate what
+you recalled, not the brain.
+
+From there the machinery carries it: the sensors dirty-mark every edit, checkpoint
+syncs what was actually edited, post-commit mirrors 1-1, pre-push guards, and the
+merge reconciles.
+
 1. **Resume** — `get_active_plan` (platform) or local `active.md`; staleness check
-   (envelope `brainForSha` vs local stamp → prompt `rafa push` if behind). MCP
+   (envelope `brainForSha` vs local stamp → say so if the platform is behind; it
+   catches up when this branch merges). MCP
    recall is automatic throughout — SOP-driven, never dev-invoked; a repo without
    the `rafinery` MCP connected falls back to local `.rafa/` file reads.
    **On a feature branch, pass `branch: <current git branch>` to
@@ -96,7 +120,7 @@ platform MCP (one read path — the same surface any third-party agent uses).
      affected note (`rafa hydrate <rule|playbook|improvement> <id>`) and edit
      it, or author a new note file under `.rafa/brain/**` — `rafa checkpoint`
      syncs it. Ledger status edits (bloom's `fixed`) ALWAYS hydrate first. It
-     enters the org brain at merge-to-main, through distillation. This is the
+     enters the org brain at merge-to-main, through reconciliation. This is the
      knowledge-propagates-like-code rule, enforced.
    The working-set files ARE the sanctioned branch authoring surface — what is
    never allowed is editing main's brain around the scan/compile/push gates.

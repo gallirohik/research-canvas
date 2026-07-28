@@ -23,7 +23,7 @@ conductor holds only the ~2-line summary — trigger boundaries, one-line announ
 ride the next digest, `/rafa sage` override):
 
 - **When** — at **completion boundaries only** (never mid-flow): a `build` final-verify · a
-  `distill` close · a `bootstrap` (session start). At each, check the trigger condition.
+  reconciliation close · a `bootstrap` (session start). At each, check the trigger condition.
 - **Trigger condition (deterministic)** — fire only when there are **new loop events since the
   learnings ledger's newest entry** AND the count of those new events is **≥ 10** (the
   recurrence-worth threshold: a pass under 10 fresh events is noise, not a pattern — skip

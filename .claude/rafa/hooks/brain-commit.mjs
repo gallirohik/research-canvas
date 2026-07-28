@@ -2,13 +2,17 @@
 // ONE brain commit per code commit, strict 1-1 (--allow-empty), on the MIRRORED
 // brain branch — never the brain default branch (the distiller's, single
 // writer). Carries whatever changed under .rafa/ plus the commit's INTENT
-// RECORD (intent/<shortsha>.md); trailers code-commit/code-branch are the join
+// RECORD (intent/<shortsha>.md); git TRAILERS code-commit/code-branch are the join
+// key. Note the two spellings are deliberate and must not be unified: a git trailer
+// is hyphenated by convention, an OKF frontmatter key CANNOT be (it is read as
+// `data.key`, and `data.code-commit` is unreachable). Class `intent` in
+// profile-rafa.mjs is the authority for the frontmatter side.
 // keys. Standalone by design (node built-ins only, like every M5 sensor);
 // non-blocking always — a brain problem must never block a code commit.
 
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
@@ -149,15 +153,36 @@ try {
   // A tail run never rewrites an existing intent record — the 1-1 mirror wrote
   // it, and a fresh `timestamp:` would make every tail beat a phantom delta
   // (the no-op contract would never hold).
+  // One-time repair of records written by <=0.16.1, which spelled these two keys
+  // the way the git TRAILER spells them. Those files fail `okf check` on every
+  // checkpoint until fixed, and the writer below never revisits an existing record.
+  // Only a file that actually carries the legacy key is rewritten, so a repaired
+  // (or already-correct) intent dir produces no delta on later beats.
+  try {
+    const intentDir = join(rafa, "intent");
+    if (existsSync(intentDir)) {
+      for (const f of readdirSync(intentDir)) {
+        if (!f.endsWith(".md")) continue;
+        const fp = join(intentDir, f);
+        const was = readFileSync(fp, "utf8");
+        const now = was.replace(/^code-commit: /m, "codeCommit: ").replace(/^code-branch: /m, "codeBranch: ");
+        if (now !== was) writeFileSync(fp, now);
+      }
+    }
+  } catch {
+    // Repair is best-effort: a commit must never fail because provenance was stale.
+  }
+
   const intentPath = join(rafa, "intent", `${short}.md`);
   if (!isTail || !existsSync(intentPath)) {
     writeFileSync(
       intentPath,
       `---\n` +
         `type: IntentRecord\n` +
+        `title: "Commit ${short}"\n` +
         `description: "per-commit intent trail (capture-engine P2) — provenance, consumed at merge, never org-brain truth"\n` +
-        `code-commit: ${fullSha}\n` +
-        `code-branch: ${branch}\n` +
+        `codeCommit: ${fullSha}\n` +
+        `codeBranch: ${branch}\n` +
         `timestamp: ${new Date().toISOString()}\n` +
         `---\n\n# ${subject}\n\n## Files\n` +
         files.map((f) => `- ${f}`).join("\n") +

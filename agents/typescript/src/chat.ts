@@ -15,6 +15,11 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { copilotkitCustomizeConfig } from "@copilotkit/sdk-js/langgraph";
 
+// Total characters of resource text allowed in the system prompt (~6k tokens),
+// leaving room for the report, chat history and tool schemas within a modest
+// per-minute token budget.
+const MAX_TOTAL_RESOURCE_CHARS = 24000;
+
 const Search = tool(() => {}, {
   name: "Search",
   description:
@@ -63,12 +68,20 @@ export async function chat_node(state: AgentState, config: RunnableConfig) {
 
   const resources: Resource[] = [];
 
+  // Per-resource truncation alone still scales with resource count, so budget the
+  // aggregate too — this block is re-sent in full on every turn.
+  let remaining = MAX_TOTAL_RESOURCE_CHARS;
+
   for (const resource of state["resources"]) {
     const content = getResource(resource.url);
     if (content === "ERROR") {
       continue;
     }
-    resource.content = content;
+    if (remaining <= 0) {
+      break;
+    }
+    resource.content = content.slice(0, remaining);
+    remaining -= resource.content.length;
     resources.push(resource);
   }
 

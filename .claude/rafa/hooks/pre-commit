@@ -1,0 +1,43 @@
+#!/bin/sh
+# rafa pre-commit hook v1 (installed by @rafinery/cli init/pull/update — safe to
+# delete; it will be offered again, never forced over a foreign hook).
+#
+# THE FIX-TIME GATE. The other positions can only report: post-commit runs after
+# the commit exists, and the merge reconciler runs server-side with the dev long
+# gone. Pre-commit is the only place a malformed change can still be stopped
+# while the person (or agent) who wrote it is still holding the context.
+#
+# It gates the BLUEPRINT, not the brain. `.rafa/` is gitignored in a code repo —
+# brain files never reach this staging area; they are proven at `rafa checkpoint`
+# (okf check, blocking) and mirrored by post-commit. What IS committed here is
+# `.claude/` — vendored shadcn-style, so the client OWNS these copies and may tune
+# an SOP or a card. A tuned copy that drifts from its contract sends every agent
+# in the repo the wrong way, silently, forever.
+#
+# Scoped on purpose: fires only when a blueprint file is actually staged, so an
+# ordinary code commit pays nothing.
+
+[ "$RAFA_HOOKS_DISABLED" = "1" ] && exit 0
+[ -f "rafa.json" ] || exit 0
+
+STAGED="$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null)"
+echo "$STAGED" | grep -qE '^(\.claude/|CLAUDE\.md)' || exit 0
+
+echo "rafa · verifying the blueprint (staged .claude/ change) …"
+npx -y @rafinery/cli verify-blueprint --staged || {
+  echo "" >&2
+  echo "rafa · COMMIT BLOCKED — the blueprint above contradicts the code it describes." >&2
+  echo "  Why it blocks here: this is the last point where the fix is cheap. Past this," >&2
+  echo "  the instruction ships to every agent that reads it." >&2
+  echo "" >&2
+  echo "  ── copy this to your agent ────────────────────────────" >&2
+  echo "  \`rafa verify-blueprint\` is failing on staged changes under .claude/." >&2
+  echo "  Run it, read the file:line findings, and fix the DOCS to match the code" >&2
+  echo "  (or the code to match the docs — whichever is actually right)." >&2
+  echo "  Re-run until it exits 0, then commit. Do not bypass the gate." >&2
+  echo "  ───────────────────────────────────────────────────────" >&2
+  echo "" >&2
+  echo "  Escape hatch (on the record): RAFA_HOOKS_DISABLED=1 git commit …" >&2
+  exit 1
+}
+exit 0

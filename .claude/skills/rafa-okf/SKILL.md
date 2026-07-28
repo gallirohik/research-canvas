@@ -52,13 +52,19 @@ Conformance is our distribution wedge; verification stays the moat.
 | **atlas** | `brain/rules/` · `brain/playbooks/` · `brain/coverage.md` | author `type` (§2 enum) + `title` + `summary` as ever; body cross-links as markdown links; optionally author `description`/`tags` — emit derives them from `summary`/`domain` if you don't |
 | **bloom** | `improve/improvements/` · `improve/ledger.md` | same; your files gain `type: Improvement` + `tags: [category, priority]` at emit — author `found:` so timestamps are yours, not git's |
 | **prism** | `brain/checklist.md` | verdict frontmatter as ever (emit stamps `type: Health Report` + a derived description); at validation, treat the checker's LINKS warns as a worklist — dangling links are claims of future knowledge |
-| **sage** | `.claude/rafa/learnings/` | learnings are OKF concepts too: frontmatter + `type: Learning` + markdown links; outside the bundle but under the same protocol |
+| **sage** | `.rafa/learnings/` | learnings are OKF concepts too: frontmatter + `type: Learning` + markdown links; outside the bundle but under the same protocol |
 | **conductor / plan·build** | `plans/**` · `brain/log.md` | plan items gain `type` from `kind` at emit (per-epic `plans/index.md`); journals + bodies use markdown links; `log.md` stays the reserved trail |
 | **compass** | — | writes platform state, never bundle `.md` — its duty is the PORTABILITY law: OKF bundles are exchangeable, so person-scoped content never lands in one; anything it ever materializes self-describes |
 
-The tooling backstop: `rafa push` runs `rafa okf` (emit) → `verify-citations`
-→ `compile`, so the surface exists even where an agent forgot — but authoring
-natively keeps stamps honest (your `created:`/`found:` beats git history).
+**The tooling backstop is `rafa checkpoint`** — it runs `rafa okf check` and
+BLOCKS before syncing, so malformed output never leaves the machine. Authoring
+OKF-natively is still what keeps stamps honest (your `created:`/`found:` beats
+any derivation).
+
+There is no automatic *emit* on the live path: the stamp/transpile/index pass
+ran inside `rafa push`, retired 2026-07-20. Derivable stamps are therefore YOUR
+job at authoring time, not something a later step will fill in — write `type`,
+`title`, `description` explicitly. (Bundle-level emit is RESERVED; contract §11.)
 
 ## Minting a NEW file type — minutes, not hours
 

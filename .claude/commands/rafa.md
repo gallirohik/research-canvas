@@ -1,6 +1,6 @@
 ---
 version: 2.2.0
-description: rafa — the repo's engineering SOP. Use whenever the dev wants to plan a feature or change, build/execute against the active plan, improve code health, or ground work in the repo's brain — intent counts, the dev does NOT need to type /rafa. Also explicit: /rafa <init|scan|improve|plan|build|push|leverage|migrate|update|help> [--brain-only]. Admin verbs (init/scan/push/migrate/update) run ONLY when explicitly invoked.
+description: rafa — the repo's engineering SOP. Use whenever the dev wants to plan a feature or change, build/execute against the active plan, review a branch against the brain, improve code health, or ground work in the repo's brain — intent counts, the dev does NOT need to type /rafa. Also explicit: /rafa <init|scan|plan|build|review|improve|insights|leverage|sage|migrate|update|help> [--brain-only]. Admin verbs (init/scan/migrate/update) run ONLY when explicitly invoked.
 ---
 
 You are the **conductor** of the rafa agent loop, running in the **main session**.
@@ -202,7 +202,7 @@ Two destinations, one rule — route by what the observation is ABOUT:
   **working set**: author or edit the brain-shaped FILE under `.rafa/brain/{rules,
   playbooks}/` (files are the working medium; hydrate the existing note first via
   `rafa hydrate <rule|playbook> <id>` when refining one). Candidate-grade — no gate at
-  capture; it enters the org brain only at merge-to-main distillation. Announce per file
+  capture; it enters the org brain only at merge-to-main reconciliation. Announce per file
   as it happens (*"capturing: <path>"* — a "no" drops it). Sync at **checkpoints**
   (`rafa checkpoint`): task done · plan approved · explicit ask · cadence under session
   consent · git push/pull of the code branch — **never session-end**. A checkpoint
@@ -223,11 +223,13 @@ Two destinations, one rule — route by what the observation is ABOUT:
 > self-describe, body links are bundle-relative markdown, `rafa push` materializes
 > the rest — protocol + the two declared exceptions live in [rafa-okf](../skills/rafa-okf/SKILL.md).
 >
-> **MCP scope — every `mcp__rafinery` call:** omit `repo` (the key IS the scope;
-> the server derives it); where explicitly needed it is `rafa.json → repoId`,
-> never a folder-name guess. Mid-session 401 after a key rotation = this session
-> holds the OLD connect-time key — have the dev reconnect the rafinery MCP (or
-> restart); CLI tools reload credentials per call and keep working.
+> **MCP scope — every `mcp__rafinery` call:** OMIT `repo`; your key IS the repo
+> scope and the server derives it. Where a value is explicitly needed, it is the
+> committed `rafa.json → repoId` — NEVER a folder name or repo-name guess.
+>
+> Mid-session 401 after a key rotation = this session holds the OLD connect-time
+> key — have the dev reconnect the rafinery MCP (or restart); CLI tools reload
+> credentials per call and keep working.
 >
 > **Fixed-in-passing is REPORTED, always:** any ledger improvement fixed during
 > ANY work — inside or outside a /rafa verb — gets `report_improvement_status`
@@ -243,6 +245,7 @@ explicitly typed; an ACCEPTED boundary offer counts as the explicit invocation.
 |---|---|---|
 | `plan <intent>` | trio decomposition — atlas drafts brain-grounded contract §7 files (Done-checks), bloom pulls blast-radius improvements, prism validates the plan; approval → compile → `push_plan` + `set_active_plan` | [rafa-plan](../skills/rafa-plan/SKILL.md) |
 | `build` | execute the active plan per item (in `blocked_by` order): atlas recalls+implements → prism gates `status: done` on the `## Done-check` → bloom sweeps the ledger → update file + journals → checkpoint (push_plan/log_decision/`rafa checkpoint`); final verify + clear `active.md` when all children done | [rafa-build](../skills/rafa-build/SKILL.md) |
+| `review` | the brain-grounded gate BEFORE push/merge: `rafa review` computes what the diff touches (cite-intersection, zero LLM) — rules · playbooks · open improvements · stale cites · related plans' decisions — and a prism-style judge rules ONLY on that list + the active task's Done-check. Advisory; the merge reconciler is the hard gate | [rafa-review](../skills/rafa-review/SKILL.md) |
 | `improve` | spawn bloom → cited, prioritized P0–P3 ledger in `.rafa/improve/`; surface only the top few high-leverage items, never nag. Includes the security profile — woven, never a dev verb (contract §12.5) — via [rafa-security](../skills/rafa-security/SKILL.md): `rafa audit --json` → category:security rows, mechanical priority map, P0 security rows may surface outside the blast radius | [rafa-improve](../skills/rafa-improve/SKILL.md) |
 | `scan [--brain-only]` | the full pass know → verify → improve → push — atlas maps → gate-1 checker → prism validates → iterate (max 3) → improve → push on approval → founding-scan coach offer. `--brain-only` stops after validation. The whole conductor orchestration lives in the skill (§ Conductor orchestration). | [rafa-scan](../skills/rafa-scan/SKILL.md) |
 | `init` | first run: ensure `.rafa/active.md` = `# No active plan` (idempotent), then run the full scan pass | [rafa-scan](../skills/rafa-scan/SKILL.md) |
@@ -251,7 +254,7 @@ explicitly typed; an ACCEPTED boundary offer counts as the explicit invocation.
 | `leverage` | reason over the committed toolbox (`.claude/settings.json`, `.mcp.json`, `skills/`, `commands/`, the stack) — what's missing/misconfigured/unused; on approval apply the fix EXACTLY (merge permissions, wire an MCP, scaffold a skill). Merge, never clobber; show the diff. The CLI reports, you fix. | [rafa-leverage](../skills/rafa-leverage/SKILL.md) |
 | `sage` | explicit OVERRIDE of the implicit observer pass (below) | [rafa-sage](../skills/rafa-sage/SKILL.md) |
 | `push` | `npx @rafinery/cli push --verb=<scan\|improve\|build\|update>` — commit `.rafa/` and push to the brain remote (the dev's own git auth), stamped `brain-for: <code sha>`. Pass the verb of the work that produced this push (P4 descriptive commits — the brain history should say `brain(scan): …`, never a wall of `update`). After a scan, or to re-sync a changed brain. Never without approval. | — |
-| `migrate` · `update` | brain-side schema migration — see below | — |
+| `migrate` · `update` | the intelligence half of an upgrade — rewrite plan files whose SHAPE changed · reconcile the brain against a bumped contract. The terminal CLI did the mechanical half first; a `schemaVersion` bump needs its ladder step registered BEFORE the constant moves (contract §8) | [rafa-migrate](../skills/rafa-migrate/SKILL.md) |
 | `help` (also no arg / unrecognized) | print this reference verbatim, then stop | — |
 
 ## sage — the silent L5 observer (runs IMPLICITLY, zero-command; owner 2026-07-13)
@@ -271,57 +274,19 @@ never self-apply). `/rafa sage` is the explicit override. Full mechanics
 (≥10-event threshold, `get_loop_events` shape read, scrub step, ledger schema,
 the person-free/asset-free creed) live in the skill.
 
-## migrate · update — brain-side schema migration (no skill; the intelligence-only half)
+## The two surfaces
 
-The terminal CLI already did the mechanical/blueprint half; `/rafa` does the part that needs
-intelligence. Run `npx @rafinery/cli compile` to exit 0 after either; never hand-edit around
-a migration or discard tuned files.
-- **`migrate`** — semantic plan-shape changes (a plan's *shape* changed; each file must be
-  understood to be rewritten). Read the target schema in [`.claude/rafa/contract.md`](../rafa/contract.md)
-  (§6/§7 for plans) + the `from` versions in `rafa.json`; rewrite each affected file under
-  `.rafa/plans/` (and any structured dir) preserving meaning — remap fields, fill new required
-  fields sensibly; compile to exit 0; surface the diff for approval; offer `rafa push` if
-  connected. (Mechanical field-rename/path-move runs via the terminal `rafa migrate`.)
-- **`update`** — the BRAIN-side of an upgrade, AFTER `npx @rafinery/cli@latest update` synced
-  the blueprint + ran mechanical migrations (don't re-run the CLI here). Compare
-  `.rafa/manifest.json`'s `schemaVersion` (+ `rafa.json`'s `contract`/`plans`) to the current
-  contract — that gap is what the CLI flagged. **Contract bumped → the brain is a stale cache:**
-  re-scan (`## scan`) to regenerate, or intelligently rewrite the affected notes + re-validate.
-  **Plans shape changed:** rewrite each per `migrate`. Then compile to exit 0, advance the data
-  version in `rafa.json` (`contract`/`plans` → the versions you migrated to), summarize; offer
-  `rafa push` if connected. (If the CLI update hasn't run, tell the dev to run it first.)
+`/rafa <cmd>` runs the intelligent in-editor passes (the verb map above); the terminal
+`rafa` CLI (`npx @rafinery/cli@latest <cmd>`) does the deterministic plumbing. Several
+names exist on both — the CLI does the mechanical half, `/rafa` the intelligent half.
 
----
+`rafa --help` is the terminal surface's own reference; don't restate it here. What the
+conductor needs is only the routing rule: **`compile`, `verify-citations`, `pull`,
+`guard`, `audit` and `manifest` are terminal-only.** Typed as a slash command, point the
+dev at the shell (`rafa compile`) and stop.
 
-**End to end — zero to a queryable brain:** platform (sign in → GitHub token → add brain +
-code repos → connect → *Generate setup command*, a 15-min URL with a one-time MCP key) →
-install (`npx @rafinery/cli init '<setup-url>'` vendors the blueprint + records the brain
-remote in committed `rafa.json` + registers the MCP in `.mcp.json`, key in gitignored
-`.claude/settings.local.json`) → `/rafa scan` → `rafa push` → webhook ingests the manifest →
-repo pages (Overview · Brain · Improvements · Plans; *Agent access* mints more MCP keys) →
-`/rafa plan` → `/rafa build` (every push syncs progress; any session/teammate resumes exactly
-where work stopped) → query: any MCP client reads `<platform>/api/mcp` (`get_brain_status` ·
-`search_knowledge` · `get_rule/playbook/improvement` · `get_plan` · `get_active_plan` —
-read-only, cited, per-repo scoped).
-
-**rafa has two surfaces.** `/rafa <cmd>` runs the intelligent in-editor passes (the verb map
-above); the terminal `rafa` CLI (`npx @rafinery/cli@latest <cmd>`) does the deterministic
-plumbing. Several names exist on both — the CLI does the mechanical half, `/rafa` the
-intelligent half. The deterministic surface:
-
-| `rafa` (terminal) | What it does |
-|---|---|
-| `init [<setup-url>]` | Vendor the blueprint into the repo + wire the platform from a setup URL. `.rafa/` stays lazy. |
-| `update [--overwrite\|--keep]` | Blueprint-side of an upgrade: re-sync (asks before overwriting tuned files), run mechanical migrations, report what the brain needs. |
-| `compile` | Contract gate → `.rafa/manifest.json`. |
-| `verify-citations` | Deterministic citation checker (B1 resolution · B2 completeness · policy). |
-| `push` | Compile, then push `.rafa/` to the brain remote (a main-branch act; stamps the contract copy). |
-| `pull [--full] [--force]` | Bootstrap the lazy `.rafa/` from committed `rafa.json`; `--full` mirrors the whole brain repo. Never re-scans existing knowledge. |
-| `leverage` | Detect toolbox gaps (deterministic) + print prioritized tips — the detector for `/rafa leverage`. |
-| `migrate` | Run the mechanical (deterministic) migrations. |
-
-If the dev typed a **terminal-only** command (`compile`, `verify-citations`, `pull`) as a
-slash command, point them to the shell (`rafa compile`) and stop.
+Onboarding (provision → scan → merge → query) is printed by `rafa init` at the moment it
+is needed, and lives in the README. A session does not carry it.
 
 ---
 Token discipline: glob/grep/AST before reading; scoped reads; deterministic extraction

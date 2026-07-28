@@ -11,8 +11,27 @@
 # already happened (post-commit can't block), but the pre-push guard will
 # refuse to ship an unmirrored commit, so the failure surfaces NOW, not never.
 node ".claude/rafa/hooks/brain-commit.mjs" >/dev/null 2>&1 || {
-  echo "rafa · BRAIN MIRROR FAILED for this commit — capture incomplete." >&2
-  echo "  Repair before pushing: node .claude/rafa/hooks/brain-commit.mjs  (the pre-push guard will block until mirrored)" >&2
+  # The envelope shape (owner 2026-07-27): a failure that fires where the human
+  # cannot act must hand them something they can act WITH. post-commit cannot
+  # block — the commit already exists — so its whole job is to make the next step
+  # mechanical, including for a dev who will paste this into a coding agent.
+  echo "" >&2
+  echo "✗ rafa post-commit — brain mirror FAILED" >&2
+  echo "" >&2
+  echo "  WHAT   this commit has no 1-1 brain mirror on the brain branch" >&2
+  echo "  WHY    capture is incomplete; the pre-push guard will refuse to ship it," >&2
+  echo "         and knowledge learned in this commit is not yet recorded anywhere" >&2
+  echo "  FIX    node .claude/rafa/hooks/brain-commit.mjs" >&2
+  echo "" >&2
+  echo "  ── copy this to your agent ────────────────────────────" >&2
+  echo "  In this repository, rafa's post-commit brain mirror failed for the most" >&2
+  echo "  recent commit, so that commit has no matching brain commit." >&2
+  echo "  Run: node .claude/rafa/hooks/brain-commit.mjs" >&2
+  echo "  If it fails, read its output — it names the failing step (brain repo" >&2
+  echo "  missing, branch mismatch, or a dirty .rafa tree). Fix that, re-run until" >&2
+  echo "  it exits 0, then push. Do not bypass the pre-push guard." >&2
+  echo "  ───────────────────────────────────────────────────────" >&2
+  echo "" >&2
   mkdir -p .rafa 2>/dev/null && printf '{"t":%s000,"hook":"post-commit","error":"brain mirror failed"}\n' "$(date +%s)" >> .rafa/sensor-errors.jsonl 2>/dev/null || true
 }
 exit 0
