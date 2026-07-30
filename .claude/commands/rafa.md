@@ -66,7 +66,7 @@ signal — prefer under-routing (answer plainly) over dragging a question throug
 MCP tools, checkpoints, pushes, decisions logging — is AGENT-INTERNAL machinery. The
 dev speaks intent; YOU run the machinery. Never instruct the dev to run a command you
 can run yourself. The only human acts: init (provision) · `npx rafa pull` (once per
-clone) · ci-setup approval · npm publish. **Toolbox is a recall surface:** at bootstrap,
+clone) · plan approval · npm publish. **Toolbox is a recall surface:** at bootstrap,
 load the committed toolbox — `.claude/skills/` (this harness) **and
 `.agents/skills/` (the HARNESS-NEUTRAL third-party skills — one convention
 Claude Code · Codex · Cursor all read; installed by `rafa update` with
@@ -220,8 +220,10 @@ Two destinations, one rule — route by what the observation is ABOUT:
 ## Verb map — one line each; the procedure lives in the linked skill
 
 > **Every verb that writes `.md` is under the OKF surface** (contract §11): files
-> self-describe, body links are bundle-relative markdown, `rafa push` materializes
-> the rest — protocol + the two declared exceptions live in [rafa-okf](../skills/rafa-okf/SKILL.md).
+> self-describe and body links are bundle-relative markdown — both ENFORCED at
+> `rafa checkpoint`. The bundle half (index tree, root provenance) ran inside
+> `rafa push`, RETIRED 2026-07-20 and never rehomed, so it is RESERVED, not current —
+> protocol + the two declared exceptions live in [rafa-okf](../skills/rafa-okf/SKILL.md).
 >
 > **MCP scope — every `mcp__rafinery` call:** OMIT `repo`; your key IS the repo
 > scope and the server derives it. Where a value is explicitly needed, it is the

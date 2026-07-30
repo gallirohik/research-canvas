@@ -53,7 +53,7 @@ doesn't validate, compile fails.
 | citation-check        | `**/citation-check.md`            | **generated**                                                                                                                      | — (by `rafa verify-citations`; self-describing frontmatter, §11)                                                                                              | tool       |
 | citation-check record | `**/citation-check.json`          | **generated**                                                                                                                      | `{ checkerVersion, at, pass, gates, warns }` (by `rafa verify-citations`; compile folds it into `manifest.citations`)                                         | tool       |
 | active pointer        | `active.md`                       | **generated**                                                                                                                      | — (`# <plan-id>` or "No active plan"; compile emits it as `activePlanId`, §7)                                                                                 | conductor  |
-| contract copy         | `contract.md`                     | **generated**                                                                                                                      | — (stamped copy of `.claude/rafa/contract.md`, written by `rafa push`; self-describing frontmatter, §11)                                                      | tool       |
+| contract copy         | `contract.md`                     | **generated**                                                                                                                      | — (stamped copy of `.claude/rafa/contract.md`; the stamper ran inside `rafa push`, RETIRED 2026-07-20 and never rehomed, so this copy has **no live writer** — same orphan as the §11 bundle emit)                                                      | tool       |
 | dirty queue           | `dirty.jsonl`                     | **generated** (local state — transport-excluded, NEVER pushed/ingested)                                                            | one `{f, t}` JSON line per code edit (by the PostToolUse sensor hook; read by `rafa dirty` + the SessionStart digest)                                         | tool       |
 | reflex queue          | `reflex.jsonl`                    | **generated** (local state — transport-excluded, NEVER pushed/ingested; transcript pointers are LOCAL, raw transcripts never ship) | `{id, p, t, tp}` per detected correction + append-only `{id, done, verdict, at}` markers (by the UserPromptSubmit sensor; read by `rafa reflex` + the digest) | tool       |
 | agent                 | `.claude/agents/*.md` (code repo) | **structured** (local gate — NOT in manifest)                                                                                      | §10                                                                                                                                                           | rafa       |
@@ -265,17 +265,40 @@ cites: # required · ≥ 1
 ```
 
 `anchor:`/`absent:` are **checker declarations** (consumed by `rafa verify-citations`
-gates B2/B3, not emitted into the manifest). A note whose title/summary reads as an
+gates B2/B3) and **since the knowledge-graph arc they ALSO ride the manifest.** They
+were stripped at compile on the reading that they are checker-side only — true of who
+*validates* them, false of who *needs* them:
+
+- **`anchor:`** asserts every code hit of the token is a cited site. That is an
+  **exhaustiveness guarantee**, and it is what lets a `symbol:` graph node claim
+  completeness rather than mere presence.
+- **`absent:`** is a **verified negative claim**, re-grepped every run so it can never
+  silently go stale. It is the highest-confidence knowledge the brain holds — *"we do
+  not use X, proven on every build"* — and no retrieval product can produce it.
+
+A note whose title/summary reads as an
 absence claim without declaring `absent:` is listed as a checker WARN — prism's
 worklist, never a gate failure (a heuristic that fails the gate would be an assumed
 value).
+
+**`links:` and `supersededBy:` must RESOLVE.** Every target must be a note id present
+in the same compile; a dangling one fails `path · field · rule`. In a list a dangling
+link is a reference the reader ignores; in a **graph** it is a walk that goes nowhere,
+and the caller cannot tell "no neighbour" from "neighbour vanished". Retired notes stay
+in the set (history is the product), so a supersedes chain always resolves.
 
 **Lifecycle — retirement is a TOMBSTONE, never a deletion (owner 2026-07-27
 r7c).** Notes accept optional `status: active | retired` (absent = active; the
 gate rejects any other value; `retired` rides the manifest). A note whose
 knowledge no longer holds KEEPS its file: set `status: retired` and append a
 dated `## Retired` body section — why, and what (if anything) supersedes it
-(`superseded by [new-note](/brain/rules/new-note.md)`). Retired notes are
+(`superseded by [new-note](/brain/rules/new-note.md)`), **and declare the
+successor as DATA: `supersededBy: new-note`** (optional; only legal on a
+`status: retired` note; must resolve to a note id in the same compile). The
+prose stays — it is for humans — but the body is never parsed (§0), so without
+the field the one edge that explains *why* knowledge changed is invisible to
+every consumer, and "which playbooks link to a rule that was retired" cannot be
+asked. Retired notes are
 excluded from recall serving (a retired note in recall misleads) but remain in
 the bundle as history — continuity is the product. The same law binds every
 generated type: improvements close via `status: fixed|wontfix` plus a dated
@@ -352,6 +375,27 @@ by_priority: { P0: 0, P1: 1, P2: 3, P3: 3 }
 The scan's breadth report. `domains` is a **flow map** of `domain: status`, one entry per
 domain found (compile emits it as `[{ domain, status }]` in the manifest). Status enum:
 `mapped | thin | stubbed | empty`. The body holds the human per-criterion PASS/FAIL narrative.
+
+**`coverage.md` IS the domain REGISTRY — the closed enum every other file's domain
+names resolve against, enforced by `rafa compile` (A0, 2026-07-28):**
+
+- every note's `domain` (§2) ∈ `coverage.domains`
+- every improvement's `blast_radius[]` (§3) ⊆ `coverage.domains`
+- every epic plan's `domains[]` (§7) ⊆ `coverage.domains`
+
+A name that is not declared fails with the usual `path·field·rule`, listing the
+declared set. **Absent `coverage.md` → the lane SKIPS** (there is no registry yet; the
+manifest reports `coverage —`, so the absence stays visible rather than passing
+silently).
+
+Why it is a gate and not a checklist item: `domain` was validated only as a non-empty
+string, so nothing asserted the names AGREE — `routing` / `routing-app-shell` /
+`routing-layer` could coexist as three names for one area. The first run of this lane
+found **ten such violations in our own `examples/sample-brain/`**, where coverage's
+body table already filed the notes under one domain while their frontmatter had
+fragmented into two. The only prior check was prism's A2/A3 — an LLM judgement, the
+weakest tier in `precondition > backstop > gate > prose`. Domains are also the hub
+edge of the knowledge graph: fragmented names render clusters that do not exist.
 
 ```yaml
 ---
@@ -529,9 +573,37 @@ the _serving_ surface, and it serves only what passed compile + ingest.
 }
 ```
 
+**`provenance` — on EVERY record, unconditionally (A3, 2026-07-28).** Every
+knowledge record a tool returns carries:
+
+```jsonc
+"provenance": {
+  "kind":       "rule"|"playbook"|"improvement"|"plan",
+  "tier":       "canonical"|"provisional"|"candidate",
+  "confidence": 0.82 | null,   // §12.6 — replayed, never stored
+  "origin":     { "mergeSha": "abc123", "at": 1753…, "plans": ["learning-loop"] } | null,
+  "op":         "banked"|"rewritten"|"pruned"|"refuted" | null,
+  "age":        { "merges": 3 } | null
+}
+```
+
+Previously `source` was attached ONLY when the optional `branch` arg was passed —
+so the ordinary call returned every record with no tier, no origin and no age.
+And `source.sha` is the SNAPSHOT sha, identical on every record: it says "this
+brain was ingested at X", never "this rule was banked at Y". §0 forbids assumed
+values and the serving rule says non-canonical is ALWAYS labeled; an OMITTED
+label satisfies neither.
+
+**Unknown is an EXPLICIT `null`, never a missing field** — a caller must be able
+to distinguish "no merge has ruled on this yet" from "nobody told me". A branch
+copy is `tier: candidate` with `confidence: null`: unjudged by construction,
+which is what candidate means.
+
 **Error semantics (no assumed values, outward):** snapshot has an `ingestError` →
 every tool returns that error loudly, never partial data. Repo connected but never
-pushed (no snapshot) → `"no brain ingested — run rafa push"`. Invalid/mismatched key
+pushed (no snapshot) → the loud no-brain error naming the real path: `/rafa scan` on a
+branch, then merge — the reconciler authors the org brain and ingest follows (the older
+text named `rafa push`, RETIRED 2026-07-20). Invalid/mismatched key
 → loud auth error, never a fallback. Empty search → empty result, never a stretched
 match.
 
@@ -623,14 +695,15 @@ state**, marked by `envelope.plane: "state"`:
 | `patch_plan_item`                                                                       | plans (one item)                                        | wave 5.2 — field-level patch on ONE item (no full-tree resend): provided fields replace, absent stay; CLEARING a field and any STRUCTURE change (kind/parent/add/remove/domains/external/merged) remain `push_plan`-only, so "a vanished optional field must not survive" keeps holding at tree granularity; snapshot-before-change rides noteRevisions like a re-push |
 | `checkpoint_task`                                                                       | plans + loopEvents + planDecisions (**ONE transaction**) | wave 5.2 — the ONE-beat boundary write: optional item patch + the loop-event ruling + decision records land atomically (all-or-nothing; `mcp.call` is an action, so composing the separate tools can never be atomic — this is one internalMutation). Idempotent end-to-end (patch no-ops on same values · loop event dedupes on `dedupeKey` · decisions dedupe on client-stable ids). The embedded loopEvent obeys `report_loop_event`'s exact rules — one rulebook, no side door. `checkpoint_sync` stays separate: per-file CAS partial-accept is a different failure model than an atomic beat |
 | `report_improvement_status`                                                            | **events only** — no store                              | a LIVE session signal (bloom's fixed-in-passing during build). The improvement ledger row is untouched — it has ONE writer, the ingest (K1); the platform overlays the report as pending-reconciliation until the next brain push confirms it                                                                                                                        |
-| `reconcile_claim`                                                                      | **reconciliations queue** — (repo) run rows            | executor claim (`plane:"state"`): ACID no-running-sibling assert → returns the attempt token; delegates to `reconciliations.claim`; stamps the actor envelope `{model, agent, runner}` (runner ∈ `platform`\|`ci`\|`session` (+ `sandbox`, deprecated wire value), enum-checked at the boundary) on the row                                                                                          |
-| `reconcile_heartbeat`                                                                   | reconciliations queue                                   | extends the wall-clock lease + sets the phase; **attempt-fenced** (a non-current attempt is rejected, nothing written); actor envelope re-stamped                                                                                                                                                                                                                    |
-| `reconcile_log_append`                                                                  | **reconciliationLogs** — the run log tail               | batched chunks, **secret-screened PER LINE** (the same `looksLikeSecret` screen — a credential chunk is rejected by chunk/line index, nothing stored or echoed) + **attempt-fenced**; `seq`-ordered; UNLOGGED (emits its own `reconcile.log` event, counts only)                                                                                                       |
-| `reconcile_report`                                                                      | reconciliations queue (+ knowledge node on success)     | terminal outcome + node delta + meter; **attempt-fenced**; success COMPOSES the pointer advance atomically (insert node + move pointer, one mutation); refutation/deletion ride the success outcomes; actor envelope stamped                                                                                                                                          |
+| `reconcile_claim`                                                                      | **reconciliations queue** — (repo) run rows            | **RETIRED 2026-07-21 — absent from `TOOLS`/`TOOL_DEFS`.** The four `reconcile_*` tools existed for an EXTERNAL executor to talk back over MCP. That executor is gone (E2B/worker discarded; the reconciler is an in-process `@rafa` LangGraph run persisted by `reconcileRun.ts` → `appendStep`/`recordResult`), so a run no longer needs a tool surface to reach its own database. Kept as tombstones, never deleted. Historic behaviour: executor claim (`plane:"state"`): ACID no-running-sibling assert → returns the attempt token; delegates to `reconciliations.claim`; stamps the actor envelope `{model, agent, runner}` (runner ∈ `platform`\|`ci`\|`session` (+ `sandbox`, deprecated wire value), enum-checked at the boundary) on the row                                                                                          |
+| `reconcile_heartbeat`                                                                   | reconciliations queue                                   | **RETIRED 2026-07-21** (see `reconcile_claim`). Historic: extends the wall-clock lease + sets the phase; **attempt-fenced** (a non-current attempt is rejected, nothing written); actor envelope re-stamped                                                                                                                                                                                                                    |
+| `reconcile_log_append`                                                                  | **reconciliationLogs** — the run log tail               | **RETIRED 2026-07-21** (see `reconcile_claim`). Historic: batched chunks, **secret-screened PER LINE** (the same `looksLikeSecret` screen — a credential chunk is rejected by chunk/line index, nothing stored or echoed) + **attempt-fenced**; `seq`-ordered; UNLOGGED (emits its own `reconcile.log` event, counts only)                                                                                                       |
+| `reconcile_report`                                                                      | reconciliations queue (+ knowledge node on success)     | **RETIRED 2026-07-21** (see `reconcile_claim`) — the pointer advance now happens in `knowledgeGraph.advancePointer`, called by `reconcileRun.ts`. Historic: terminal outcome + node delta + meter; **attempt-fenced**; success COMPOSES the pointer advance atomically (insert node + move pointer, one mutation); refutation/deletion ride the success outcomes; actor envelope stamped                                                                                                                                          |
 | `list_working_sets`                                                                     | branch working set (**READ**)                           | enumerates branches with LIVE candidate rows + counts only (no bodies) — closes the 07-14 sensor gap (`get_working_set` needs a branch arg; nothing listed them); feeds the SessionStart digest pending line                                                                                                                                                         |
 | `report_loop_event`                                                                     | **loopEvents** — the loop-outcome ledger (sage's evidence) | ONE structured outcome per ruling, shapes only (enum category + per-category enum outcome + `subject` shape ref, secret-screened). Wave 5 trust plane, STRICT (no legacy path): **required actor envelope** `{model, agent, runner ∈ platform\|ci\|session, + deprecated sandbox}` (mechanical CLI emits use `model:"mechanical"`); **required `verification {method: static\|live, tool?, evidence?}`** on `prism-verdict`/`gate-result`/`review-verdict` — the static-vs-executed distinction is structural, never prose; optional `dedupeKey` (≤120) makes the emit **idempotent** (same `(repo, key)` never lands twice — response says `deduped`) and `tier ∈ light\|standard\|full` records the §7 `validation_tier` the ruling ran at |
 | `get_loop_events`                                                                       | loopEvents (**READ**)                                   | newest-first shape read (optional category filter, limit ≤500): category/outcome/subject + actorMeta/verification/dedupeKey/tier + at — no bodies, no code; sage splits miss patterns by verification method, actor, and tier                                                                                                                                          |
 | `report_learning`                                                                       | **agentLearnings** — the learnings STORE                | sage ONLY: stores one learning (local copy in `.rafa/learnings/<id>.md`, the gitignored ledger sibling; the DB row is the durable truth the platform renders). Asset-free ENFORCED server-side: enum status/leverage/categories, `.claude/`-only diff TARGET (the card/SOP a learning proposes to change), length caps, code-fence + secret screens; upsert by id                                                                                                          |
+| `list_learnings`                                                                        | agentLearnings (**READ**)                               | the read twin of `report_learning`, which was WRITE-ONLY — sage banked learnings and nothing could read one back, so the meta plane had no return path into work time. Shapes only (pattern · categories · evidenceShape · proposedDiffTarget · proposedChange · status · leverage), never customer assets, exactly like `get_loop_events`. **`status` defaults to `accepted` server-side**: a PROPOSAL is not guidance, and serving unreviewed proposals as context would be the self-application sage's card forbids. Account-scoped; the repo key NARROWS, never widens |
 
 State tools work with or without an ingested brain (a working set can exist —
 and a plan can be pushed — before the first scan) and are exempt from the
@@ -908,6 +981,33 @@ tier, delta reported in one line) · **scan/improve** (full three-tier profile �
 blast radius) · **every merge** (§12.1/§12.3). `rafa doctor` fails a
 `package.json` repo with no lockfile and prints the per-manager generate
 command — coverage is never silently absent.
+
+### 12.6 Confidence — the reinforcement stream, replayed (A2)
+
+`knowledgeNodes.delta.{banked, rewritten, pruned, refuted}` is already a
+reinforce / weaken / contradict signal: every merge RE-GROUNDS the notes it
+touches and records the ruling. Replaying that fold over the trunk chain yields a
+per-note `confidence ∈ [0,1]`, so **`tier` is DERIVED, not hand-assigned**, and
+the brain can express a state it previously could not: *canonical but
+low-confidence* — the refresh queue ranked by EVIDENCE rather than by age.
+
+- **Replayed, never stored.** Nodes are append-only, so the fold is always
+  reproducible from them; a stored counter would be a second source of truth free
+  to drift from the graph — what `brain = f(code@sha)` forbids.
+- **Asymmetric by design.** A refutation is a judge ruling AGAINST the claim,
+  strictly stronger evidence than one more merge leaving it alone, so it costs
+  double what a reinforcement pays. A prune is terminal within its cut.
+- **The floor forgives.** Clamping at 0 discards debt below zero, so a note
+  refuted into the floor and later re-banked recovers faster than one still
+  carrying negative arithmetic. Deliberate: unbounded debt would make a wrongly
+  refuted note unrecoverable, contradicting §12.4's tombstone law that closing is
+  a status a later merge can reopen, never a permanent verdict.
+- **Ordering is load-bearing** where the fold is non-linear (the clamp, prune's
+  reset); the weights themselves are additive and order-independent.
+
+Served on every record as `provenance.confidence` (§9). It is the one lever that
+improves the brain **without growing it** — volume taxes every served payload, so
+compounding lives in ranking and pruning, not in capture.
 
 ---
 

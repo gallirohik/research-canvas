@@ -62,6 +62,7 @@ try {
   // surfaces carry to the OLD branch first — deterministic, nothing lost.
   const cur = shR("git rev-parse --abbrev-ref HEAD");
   if (cur !== branch) {
+    let carried = null;
     try {
       shR("git add -A");
       disposeHydrations(cur);
@@ -70,10 +71,32 @@ try {
       /* nothing dirty */
     }
     try {
+      carried = shR("git rev-parse HEAD");
+    } catch {
+      /* unborn branch — nothing to carry */
+    }
+    let existed = false;
+    try {
       shR(`git rev-parse --verify -q "refs/heads/${branch}"`);
       shR(`git checkout -q "${branch}"`);
+      existed = true;
     } catch {
+      // New branch: created from the current HEAD, so the tree already carries.
       shR(`git checkout -q -b "${branch}"`);
+    }
+    // The carryover above preserves the working brain on the OLD branch, but a
+    // plain checkout of an EXISTING target replaces the tree with whatever that
+    // branch holds — and a stale target (e.g. one still sitting on an empty genesis
+    // base) then makes the 1-1 mirror below commit an EMPTY brain. The content must
+    // travel WITH the switch, exactly as the checkout -b path above gets for free.
+    // read-tree sets index+worktree to the carried tree without moving HEAD, so the
+    // mirror commits the real brain onto `branch`.
+    if (existed && carried) {
+      try {
+        shR(`git read-tree -u --reset ${carried}`);
+      } catch {
+        /* best effort — the mirror below still records whatever is on disk */
+      }
     }
   }
 
@@ -173,6 +196,32 @@ try {
     // Repair is best-effort: a commit must never fail because provenance was stale.
   }
 
+  // The OPEN RUN, if this commit was made inside one (B5). This is the link that
+  // closes the lineage: runId → taskId → codeCommit → brain commit → mergeSha →
+  // reconciliation → node. Every other hop already existed; the commit end did not
+  // know which run produced it, so the chain started one link in.
+  //
+  // Read from local state, best-effort — a commit must never fail because a run
+  // record was unreadable, and a commit made outside a run legitimately has neither.
+  let run = null;
+  try {
+    const runsDir = join(rafa, "runs");
+    if (existsSync(runsDir))
+      run =
+        readdirSync(runsDir)
+          .filter((f) => f.endsWith(".json"))
+          .map((f) => {
+            try {
+              return JSON.parse(readFileSync(join(runsDir, f), "utf8"));
+            } catch {
+              return null;
+            }
+          })
+          .find((r) => r?.status === "running") ?? null;
+  } catch {
+    /* no run, or unreadable — the record simply carries no run link */
+  }
+
   const intentPath = join(rafa, "intent", `${short}.md`);
   if (!isTail || !existsSync(intentPath)) {
     writeFileSync(
@@ -183,6 +232,10 @@ try {
         `description: "per-commit intent trail (capture-engine P2) — provenance, consumed at merge, never org-brain truth"\n` +
         `codeCommit: ${fullSha}\n` +
         `codeBranch: ${branch}\n` +
+        // Omitted when absent rather than written empty: "this commit was not made
+        // inside a driven run" is a fact, and a blank field would read as a lost one.
+        (run?.runId ? `runId: ${run.runId}\n` : "") +
+        (run?.params?.taskId ? `taskId: ${run.params.taskId}\n` : "") +
         `timestamp: ${new Date().toISOString()}\n` +
         `---\n\n# ${subject}\n\n## Files\n` +
         files.map((f) => `- ${f}`).join("\n") +
@@ -210,15 +263,28 @@ try {
       // checkpoint-written loop-event cache the sage-due digest reads.
       "session-facts.json",
       "loop-events-tail.json",
+      // The recall receipt (B2). Local evidence that the loop RAN — queries, entry
+      // strata, lane A/B — never knowledge about the code. Mirroring it would push a
+      // session's search history into the org brain and on to reconciliation.
+      "recall.jsonl",
     ];
+    // Machine-state DIRECTORIES. `runs/` is the run-state driver's per-run record
+    // (R8): step evidence, exit codes, attempts. Same class as the files above and
+    // it was never excluded — so every driven run was mirroring its own bookkeeping
+    // into the knowledge repo.
+    const LOCAL_DIRS = ["distill-incoming", "runs"];
     const gi = join(rafa, ".gitignore");
     const cur = existsSync(gi) ? readFileSync(gi, "utf8") : "";
     const have = new Set(cur.split("\n").map((l) => l.trim()).filter(Boolean));
-    const missing = [...LOCAL_STATE, "*.theirs.md", "distill-incoming/"].filter((l) => !have.has(l));
+    const missing = [
+      ...LOCAL_STATE,
+      "*.theirs.md",
+      ...LOCAL_DIRS.map((d) => `${d}/`),
+    ].filter((l) => !have.has(l));
     if (missing.length)
       writeFileSync(gi, cur + (cur === "" || cur.endsWith("\n") ? "" : "\n") + missing.join("\n") + "\n");
     for (const p of LOCAL_STATE) shR(`git rm -q --cached --ignore-unmatch "${p}"`);
-    shR('git rm -q -r --cached --ignore-unmatch distill-incoming');
+    for (const d of LOCAL_DIRS) shR(`git rm -q -r --cached --ignore-unmatch ${d}`);
     shR('git rm -q --cached --ignore-unmatch "*.theirs.md"');
   } catch {
     /* exclusion is best-effort */

@@ -64,6 +64,19 @@ than from memory of the shape; `rafa compile` rejects any violation with a
 `path · field · rule` error. `title`, `summary` and `fix` are required frontmatter — the
 platform shows them, and nothing is scraped from prose.
 
+**ALWAYS declare `blast_radius`.** It is optional in the schema and load-bearing in
+practice: it is an improvement's ONLY hub edge in the knowledge graph. A note carries
+`domain`, an epic carries `domains`, an improvement carries this — and without it the
+row hangs off its `cites` alone, never appears in a domain neighbourhood, and the
+question this whole pass exists to answer — *"what open debt sits in an area nobody has
+mapped?"* — returns nothing about it.
+
+Measured on a real brain: **all 14 improvements declared `[]`**, so the graph carried
+zero in-domain edges from the ledger while carrying 23 from notes and plans. `rafa
+compile` now WARNS on an empty one. It is deliberately not derived from the domains of
+notes citing the same files — that would invent a facet you never wrote, which §0
+forbids. Name the domain(s) the fix actually touches, from `coverage.md`'s registry.
+
 ---
 
 ## Procedure (`/rafa improve`)
