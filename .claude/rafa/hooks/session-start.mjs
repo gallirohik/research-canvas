@@ -343,7 +343,11 @@ try {
     const cache = readJson(join(rafaDir, "loop-events-tail.json"));
     if (cache?.schemaVersion === 1 && Array.isArray(cache.events)) {
       let ledgerAt = null;
-      const ledgerPath = join(root, ".claude", "rafa", "learnings", "ledger.md");
+      // sage WRITES `.rafa/learnings/` (its card + the SOP); this read pointed at
+      // `.claude/rafa/learnings/`, which never exists — so `ledgerAt` was always
+      // null, every cached event counted as fresh, and the digest claimed "sage has
+      // never run here" forever, even with an accepted ledger on disk.
+      const ledgerPath = join(rafaDir, "learnings", "ledger.md");
       if (existsSync(ledgerPath)) {
         const m = readFileSync(ledgerPath, "utf8").match(
           /^-\s*Generated:\s*([0-9]{4}-[0-9]{2}-[0-9]{2}(?:[T ][0-9:.Z+-]+)?)/m,

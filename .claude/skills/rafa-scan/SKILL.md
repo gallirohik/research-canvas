@@ -92,6 +92,32 @@ file, finds nothing, and stops trusting the brain. So fidelity is non-negotiable
   An absence-shaped title/summary with no `absent:` declared is flagged as a checker WARN —
   resolve every WARN before hand-off (declare the token, or reword the claim).
 
+### `anchor:` · `absent:` · `links:` are now GRAPH EDGES, not just checker inputs
+
+They always rode the files; since the knowledge-graph arc they also ride the **manifest**,
+so every consumer sees them. That changes how liberally you should declare them.
+
+- **`absent:` is the strongest knowledge the brain holds — declare it far more often
+  than you do now.** It is the only **verified negative** claim in the system: the checker
+  re-greps it every run, so *"we do NOT use X"* can never silently go stale. It lets an
+  agent answer **"do we use Redux?" → "no, proven on every build"**, which no retrieval
+  system can produce. Measured on our own `examples/sample-brain`: 23 notes, 6 anchors,
+  **zero `absent:` declarations.** Every "we don't do X here" claim in a body is a missed
+  one — lift it into frontmatter.
+- **`anchor:` is what a `symbol:` graph node stands on.** It asserts *every* code hit of
+  the token is cited — an **exhaustiveness** guarantee, not mere presence. Declare it for
+  every load-bearing token, not only where the policy gate forces it on `type: contract`.
+- **`links:` density is now load-bearing, and dangling links FAIL the compile.** The
+  declared tier of the graph *is* the link fabric: a note reachable only through its
+  domain hub is an unmapped neighbourhood no walk can cross. Verified live on
+  research-canvas: 59 links across 17 notes, 0 dangling — that is the bar, and the gate
+  now pins it.
+- **Retirement writes `supersededBy: <note-id>` as a FIELD**, in addition to the dated
+  `## Retired` body section. The prose is for humans; the body is never parsed, so without
+  the field the one edge explaining *why* knowledge changed is invisible, and
+  "which playbooks point at a retired rule" cannot be asked. The gate cross-checks that
+  it resolves, and rejects it on a note that is not `status: retired`.
+
 ---
 
 ## Output (to `.rafa/brain/`)
@@ -120,15 +146,41 @@ Machine-read fields live in frontmatter; the body is prose, never parsed.
 graph edges (body links are for human + foreign-agent reading). `cites` + `domain` + `links` are the
 retrieval index. Bodies read like a senior engineer explaining that one concept to a teammate.
 
+**AUTHOR `links:` — it is the only edge you write by hand, and it was empty.**
+`cites` link a note to CODE; `links` link a note to its NEIGHBOURS, and graph
+recall walks them to reach knowledge a lexical match alone would miss. Until
+2026-07-28 not one shipped note carried any, so the graph was hub-and-spoke
+through `domain` and nothing else.
+
+Write the ids of the notes a reader of this one would need next — the contract it
+depends on, the flow it participates in, the how-to that applies it:
+
+```yaml
+links: [provider-nesting-order-contract, app-shell-render-flow]
+```
+
+Ids, not paths. Dangling ids are a WARN, never a failure (`verify-citations`'
+LINKS lane) — a link to knowledge not yet written is prism's worklist, and
+naming it is how the next scan knows what is missing.
+
 ---
 
 ## The seven sub-capabilities (run in order)
 
 1. **Inventory** [deterministic] — from workspace config (`pnpm-workspace.yaml`,
    `turbo.json`, `package.json`) enumerate every app/package, then every domain
-   (design-system · components · routing/app-shell · API · data layer · auth ·
-   agent/runtime · cross-app bridges · state · build/monorepo · external integrations).
-   Emit a **coverage checklist**; show it first.
+   (design-system · components · routing-app-shell · api · data-ops · auth ·
+   agent-runtime · web-agent-bridge · shared-state · build-monorepo ·
+   external-integrations). Emit a **coverage checklist**; show it first.
+
+   **A domain id is ONE kebab-case token, and `coverage.md` is its REGISTRY**
+   (contract §6): every note's `domain`, every improvement's `blast_radius[]` and
+   every epic's `domains[]` must resolve to a name declared there — `rafa compile`
+   FAILS otherwise. Write `routing-app-shell`, never `routing/app-shell`, because a
+   slash invites two half-names later: that is precisely how our own sample brain
+   ended up with `routing` + `app-shell` + `agent` + `build` against declared
+   `routing-app-shell` / `agent-runtime` / `build-monorepo` — ten violations, and
+   coverage's body table had them filed correctly the whole time.
 
 2. **Entry-point detection** [deterministic] — per app, find roots: `index`/`main`,
    route files, middleware, graph/agent defs, root providers, `bin`.
@@ -320,6 +372,9 @@ A scan **PASSES only if every box below is true.** Any single failure → `itera
 - [ ] **A2** Every domain has an explicit status: `mapped` | `thin` | `stubbed` | `empty`. No domain unlisted.
 - [ ] **A3** Every `mapped` domain has ≥1 note. (mapped + 0 notes = FAIL.)
 - [ ] **A4** Every `thin`/`stubbed`/`empty` domain states why. (a silent gap = FAIL.)
+- [ ] **A5** Every `domain` / `blast_radius[]` / `domains[]` in the brain resolves to a
+      name declared in `coverage.md`. Mechanical — `rafa compile` fails on a stray name,
+      so this box is confirmation, never the check itself.
 
 **B · Fidelity — verify, don't infer (hard gate)**
 - [ ] **B1** `npx @rafinery/cli verify-citations` **exits 0** — every `file:line :: token`
@@ -342,6 +397,10 @@ A scan **PASSES only if every box below is true.** Any single failure → `itera
       files for current specifics; the brain is the index, not the oracle.)
 - [ ] **C2** Every note answers ≥1 of the four questions. A note that only describes code = drop.
 - [ ] **C3** Every note has: `type` (convention|contract|flow|how-to), `domain`, ≥1 `cite`.
+- [ ] **C3b** **Every domain holding ≥2 notes has ≥1 `links:` edge between them.** A domain
+      whose notes are connected only through the domain hub is an unmapped neighbourhood —
+      graph recall cannot cross it. (A genuinely isolated note is fine; an isolated
+      *domain* is the finding.)
       Contracts also carry `failure: silent|loud`.
 - [ ] **C4** Contracts and flows link (bundle-relative markdown) to the notes they touch — blast-radius and
       end-to-end flow are traversable by following links.

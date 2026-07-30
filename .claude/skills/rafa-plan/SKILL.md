@@ -88,6 +88,11 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
    stale mental model. `search_knowledge` may return a **`decisions`** block
    (prior recorded calls matching the query): read it BEFORE re-litigating a
    settled decision — reopening one is the owner's move, not the plan's.
+   A returned PLAN carries **`taught`** — the notes its merges actually banked
+   or rewrote: what the last pass through this work taught the brain. Read it as
+   prior art before planning the same ground again, and pass the domain you are
+   planning in as `domain:` — the filter now reaches plan epics and their
+   decisions, so the settled calls about that domain arrive with the notes.
    Then **decompose** into the WORK-ITEM TREE (contract
    §7 v2): one epic → tasks → subtasks (three ranks, never deeper). Every item
    carries the glimpse fields — `title` (what) · `description` (why) ·
