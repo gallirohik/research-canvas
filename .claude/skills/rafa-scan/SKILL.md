@@ -220,6 +220,13 @@ naming it is how the next scan knows what is missing.
    reference repo: `demo/page.tsx`, the only chat example, uses page-level `"use client"`
    against the RSC convention; the 2026-06-03 brain-vs-cold audit caught a cold agent copying
    it — a 100K-token correction round.)*
+   **Debt is recorded NORMATIVELY, never only described.** A note that records a partial
+   convention or known lag ("the cap landed in TS only; Python still lags") MUST also state
+   the obligation as a rule: *"any NEW code in this class MUST <the convention> — the lag is
+   debt, not a pattern to match."* A description alone gets read as license: a measured
+   brain-vs-cold run (2026-07-31) watched an agent read exactly such a note, cite it, and
+   ship the breach anyway "for consistency with the existing uncapped nodes." Agents
+   pattern-match what the note describes; only a MUST steers them past the broken examples.
 
 5. **Seam detection** [grep + LLM judge] — anchor tokens (agent/graph names, tool names,
    env vars, route strings, exported state/types, table names). For each, run
@@ -283,6 +290,15 @@ subagent it calls in step 1/5. **`init`** = ensure structure idempotently (`.raf
 = `# No active plan`), then run the full scan below. **`scan`** default runs the whole
 pipeline; **`--brain-only`** stops after the brain is validated (step 5 PASS) — skips improve
 + push, a cheap knowledge refresh.
+
+**THE SEQUENCE IS DRIVEN (B6).** Open `rafa run scan` FIRST: the ladder's `does`
+steps (preflight pull · `gate-1` citation check · compile · capture checkpoint)
+run themselves with receipts, and its `asks` steps map onto this pipeline —
+`inventory` = step 0's coverage survey, `author` = step 1 (atlas maps),
+`validate` = step 5 (prism), `land` = the approval push. After each asks-step:
+`rafa run advance --note="…"`. The pipeline text below is the HOW of each
+handed step; the driver decides WHICH and WHEN, and an out-of-order advance is
+a refusal — including the capture step every long scan used to skip.
 
 0. **RESOLVE THE REAL BRAIN FIRST — mandatory and mechanical (the canonical
    continuity law, [contract §12.4](../../rafa/contract.md)).** Before ANY scan

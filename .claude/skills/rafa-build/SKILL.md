@@ -16,12 +16,68 @@ platform MCP (one read path — the same surface any third-party agent uses).
 
 | Role | Agent | Job per task |
 |---|---|---|
-| **Executor** | atlas | RECALL the task's brain slice via MCP (`search_knowledge` + `get_rule`/`get_playbook`; honor non-exemplars) → **HYDRATE that slice** (`rafa hydrate rule <id...>` / `playbook <id...>`) → implement, convention-adherent |
+| **Executor** | atlas | RECALL the task's brain slice via MCP, query-first (a task IS an anchor — `query_knowledge` by the task's files/domain/plan id; `search_knowledge` only for free text; + `get_rule`/`get_playbook`; honor non-exemplars) → **HYDRATE that slice** (`rafa hydrate rule <id...>` / `playbook <id...>`) → implement, convention-adherent |
 | **Validator** | prism | validate the execution against the child's `## Done-check` — strict, unbiased, against code + brain, never against atlas's claims. **`status: done` only on prism PASS**; FAIL → atlas corrects (validate-and-correct at work time). **TDD tasks (wave 6): green re-run LIVE; red per tier (standard = attested `method:"static"` · full = re-run at the red commit in a throwaway worktree). Findings carry `Critical (Must Fix) · Important (Should Fix) · Minor (Nice to Have)` — ITERATE iff any Critical/Important; Minor NEVER flips the verdict.** Plan-done adds one line to the verdict: **working set reviewed — captured, or clean-with-reason** (a build that learned nothing SAYS so; a build that learned something SHOWS the files) |
 | **Improver** | bloom | **push**: new improvement opportunities spotted during execution → new ledger files. **close**: improvements fixed in passing → `status: fixed` in the ledger file + `report_improvement_status(id, fixed)` so the platform shows it LIVE as pending-reconciliation (the ledger row itself changes only at the next brain push — K1). **nudge**: top-leverage open item in the task's blast radius — opt-in, never blocking. **audit**: a task that touched a lockfile or manifest re-runs the cheap dependency tier (`rafa audit --json`, contract §12.5) and reports the delta in one transparent line — new or cleared findings, never silence; a newly-surfaced critical becomes a `category: security` P0 row now |
 | **Coach** | compass | **sitback** (harness-arc): after each task's verdict + sweep, one beat of reflection — did THIS task reveal something about how this DEV works (a preference, a recurring friction, a steering pattern)? Repo knowledge goes to the working set, never here. A genuine dev-level observation becomes its OWN opt-in offer (consent doctrine: insights are NEVER under session consent) → `put_dev_insight` on yes. No observation = no offer — silence is the honest default |
 
+## Two doors into the brain — words, and structure
+
+`search_knowledge` ranks by WORDS. It is the right door when you can describe what
+you want in prose, and the wrong one whenever the thing you know is **structural** —
+a file you are holding, a rule id, a symbol, a domain. Those questions have exact
+answers, and scoring text for them is a guess where a lookup exists.
+
+`query_knowledge` is that lookup. **Both doors run and merge — you never choose**:
+supply `match.text` and a structural predicate together and the engine decides which
+leads (words that hit lead; words that miss let structure lead). Asking structurally
+does not cost you the lexical hit.
+
+**Introspect, then compose — never paste a vocabulary.** Call `query_schema` FIRST
+(once per session; it is cheap and cacheable on scope + brainForSha). It returns the
+live node kinds, the graded edge types, the predicates, and this repo's actual topic
+list. Compose against what it returned. An SOP that hardcodes kinds or edges goes
+stale the moment the schema moves, and a stale contract that still type-checks is how
+this system has already lost a payload — so the vocabulary is SERVED, never memorised.
+A rejected query answers in compile's `path · field · rule` shape, with the live
+vocabulary attached: read it and correct, do not guess again.
+
+Predicates are `match · where · traverse · at · groupBy · return · limit`.
+**Scope is never one of them** — repo, tenant and tier come from your key. A query
+narrows within what you already hold; it can never reach outside it.
+
+The three questions worth asking at build time that words cannot answer:
+
+| Ask | Why it beats a text search |
+|---|---|
+| **"what depends on this rule?"** — `where: { links: { to: { id: <id> } } }`, before you edit or delete it | Editing a note that others link to, or pruning one, silently breaks them. Dangling `links:` is now a HARD compile failure, so this is the difference between a clean build and a gate failure with no obvious cause. |
+| **"what knows about this file?"** — `where: { cites: { file } }` for a file already in your hands | You have the exact path. Describing it in prose and hoping the scorer agrees is strictly worse than looking it up. |
+| **"what did we decide here, and when?"** — `traverse` from a domain to its decisions/plans | Plans, decisions and merges are in the graph. "Why is it like this" is a walk, not a phrase match. |
+
+`resolve_cite` reads the CODE at a citation without a checkout — a cite is a global
+coordinate, so `groundedAt` is an address, not a caveat. Use it to quote what a note
+claims rather than trusting the claim.
+
 ## Procedure
+
+**THE SEQUENCE IS DRIVEN (B6).** This procedure runs on the ladder, not from
+memory: the conductor opened `rafa run build` (the ready task is derived — an
+unfinished leaf nothing waits on — or passed with `--task`), and the driver
+hands ONE step at a time. The `does` steps (pull · `recall --task` ·
+`hydrate --from-recall` · `checkpoint`) are already executed with receipts —
+read their evidence, never re-run or re-attest them. The `asks` steps map onto
+this SOP's roles exactly:
+
+| ladder step | this SOP's section |
+|---|---|
+| `implement` | the Executor row — atlas, recalled-knowledge-grounded, TDD default |
+| `validate` | the Validator row — prism runs the `## Done-check` itself |
+| `sweep` | the Sweeper row — bloom's ledger pass + fixed-in-passing reports |
+| `sitback` | compass's opt-in observation (silence is the honest default) |
+| `land` | the commit per [rafa-commit](../rafa-commit/SKILL.md) — task id in the subject |
+
+After each asks-step: `rafa run advance --note="<what you did>"`. Out-of-order
+is a refusal; `rafa run status` re-orients a resumed session.
 
 **Recall HYDRATES — thinking includes having the material present.** Recall is not
 just a read into context: the slice it returns is pulled to disk in the same beat

@@ -614,6 +614,9 @@ match.
 | `get_brain_status`                              | `repo`                                    | envelope + per-type counts, health, coverage summary, `activePlanId`, `ingestError?`                                                                                                            |
 | `get_coverage`                                  | `repo`                                    | coverage rows (the domain map — how an agent navigates)                                                                                                                                         |
 | `search_knowledge`                              | `q`, `types?`, `domain?`, `limit?`        | ranked candidates (fields per type below)                                                                                                                                                       |
+| `query_schema`                                  | —                                         | the LIVE query vocabulary — kinds, graded edge types, this repo's topics; generated from the OKF registry, never hand-written                                                                    |
+| `query_knowledge`                               | `query` (shape below)                     | rows satisfying the predicates, with grades and paths — the graph door                                                                                                                          |
+| `resolve_cite`                                  | `file`, `line?`, `sha?`                   | the CODE at a citation, via GitHub — for agents with no checkout                                                                                                                                |
 | `ask_knowledge`                                 | `repo`, `q`                               | the guarded synthesis read (below) — `{answer, synthesized, citations[], retrieval, usage?}`                                                                                                    |
 | `get_rule` / `get_playbook` / `get_improvement` | `repo`, `id`                              | full frontmatter + lazy-fetched body + cites as objects                                                                                                                                         |
 | `list_improvements`                             | `repo`, `status?`, `priority?`, `domain?` | ledger rows                                                                                                                                                                                     |
@@ -635,6 +638,53 @@ Score = Σ over matched case-folded query tokens of field weight (`title` 3 ·
 `domain`/`category`/`blast_radius`/`type`/`plan`/`parent` 2 · `summary` 1); tie-break
 score desc then id asc; fields a type lacks are omitted, never defaulted. Candidates
 carry `matchKind: "lexical"` (`"semantic"` reserved).
+
+### 9a. The query plane — the brain as a QUERYABLE graph (2026-07-30)
+
+The brain is not a search index. Search returns things that RESEMBLE your words; a
+**query** returns things that SATISFY conditions. Every consumer holds one contract:
+
+```jsonc
+query_knowledge({ "query": {
+  "match":    { /* node predicates — kind, text, … per query_schema */ },
+  "where":    { "<edgeType>": { /* target condition */ } },   // e.g. { "cites": { "file": "src/x.ts" } }
+  "traverse": [ /* graded walk steps */ ],
+  "at"?, "groupBy"?, "return"?, "limit"?
+}})
+```
+
+The predicate vocabulary is NOT enumerated here on purpose: `query_schema` serves
+it LIVE (kinds, edge types, topics), generated from the OKF registry — a baked-in
+list goes stale the day a type is minted. Call it first. A malformed query returns
+a TEACHING error (`path · field · rule` + the legal values); self-correct from it,
+never guess.
+
+**Query-first is the standing rule.** Reach for `search_knowledge` only when your
+sole anchor is free text — and free text is the WEAKEST rung:
+
+```
+strongest   file / symbol / merge sha        exact — query by cites/touches
+            plan id / task id / issue id     exact — query by delivered-by/links
+weakest     English                          search, or classify into the topic map
+```
+
+Always harvest the anchor you already have (open file, diff, branch name, task id)
+before composing words. Never fabricate one.
+
+**Grade → permitted action.** Every result carries the grade of the weakest edge on
+the path that produced it (`verified > derived > authored` — a grade answers one
+question: *can this edge be wrong?*). The grade decides what you may do — not your
+judgement:
+
+| grade        | it is                                            | you may                                                                 |
+| ------------ | ------------------------------------------------ | ----------------------------------------------------------------------- |
+| **verified** | a `cites` edge — the build re-greps it           | act directly — navigate to `file:line`; re-checking is re-running a machine |
+| **derived**  | a mechanical join (domain, merge history)        | trust the RELATION as navigation; it carries no claim about the code    |
+| **authored** | an asserted `links`/`supersedes` edge — nothing re-checks it | follow as a lead; confirm against code before relying — the only grade that can be quietly wrong |
+| *(absent)*   | the map has nothing here                         | a GAP — author the knowledge or record the gap; do not guess            |
+
+Where the map says gap: stop acting confidently, widen (read the code properly),
+and the session owes a note.
 
 **`ask_knowledge` — the guarded synthesis read (the reserved id, filled 2026-07-13
 per the served-brain spec).** For THIN clients (Slack bots, dashboards); full agents

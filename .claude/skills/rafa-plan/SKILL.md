@@ -17,8 +17,10 @@ brain (don't re-derive), *aware* of the ledger (fold improvement into the work),
 Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
 
 - **atlas drafts** — RECALL the brain slice for the intent's domains through the
-  knowledge MCP (`get_coverage` to navigate → `search_knowledge` → `get_rule` /
-  `get_playbook`, including non-exemplars), **HYDRATE that slice**
+  knowledge MCP, query-first (`get_coverage` to navigate → `query_knowledge` from
+  the strongest anchor you hold — files, domains, plan/issue ids; `search_knowledge`
+  only when the intent is still free text → `get_rule` / `get_playbook`, including
+  non-exemplars), **HYDRATE that slice**
   (`rafa hydrate rule <id...>` / `playbook <id...>` — batch, one beat), name the
   BLAST RADIUS from coverage, decompose into parent + child plan files.
   Hydrating at recall means the notes a plan reasons over are already local and
@@ -76,6 +78,18 @@ Planning is a choreography, not one agent (spec: knowledge-mcp-build-agent):
   with the user" step** — consent rides the existing approval gate.
 
 ## Procedure
+
+**THE SEQUENCE IS DRIVEN (B6).** The conductor opened `rafa run plan` before
+dispatching here; the driver hands one step at a time. Its `does` steps
+(preflight pull · `recall` with the intent's words · the security `audit` ·
+`hydrate` · the `capture` checkpoint) are already executed with receipts — the
+recalled slice is ON DISK when drafting starts; read the receipt's lane rather
+than re-searching, and read the audit's rows rather than re-running it. Its
+`asks` steps map onto this procedure: `debt` = step 3 (bloom's blast-radius
+pull), `draft` = steps 4–5 (atlas's contract §7 files), `gate` = step 6
+(prism's validation). After each: `rafa run advance --note="…"`. Out-of-order
+is a refusal; `rafa run status` re-orients. The numbered steps below are the
+HOW of each handed step — not a sequence you drive yourself.
 
 1. **Staleness check** — compare the platform envelope's `brainForSha` against the
    local brain stamp; if the platform is behind, SAY SO — the gap closes when the

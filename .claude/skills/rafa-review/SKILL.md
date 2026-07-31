@@ -39,9 +39,9 @@ The judge's spend is proportional to the DIFF, never to the brain. Owner rule
 querying files wholesale is a waste. Concretely:
 
 1. **The pre-pass is free AND selective** — zero LLM; every note carries a
-   deterministic RELEVANCE score (direct-hit +3 · failure:silent +2 · cite
-   anchor token appears in the diff's added lines +2 · title/summary keyword
-   overlap +1 each, capped) and an **`engage` tier**:
+   deterministic RELEVANCE score (direct-hit +3 · `type: contract` +2 ·
+   failure:silent +2 · cite anchor token appears in the diff's added lines +2 ·
+   title/summary keyword overlap +1 each, capped) and an **`engage` tier**:
    - `deep` — body-worthy: hydrate/fetch and judge fully;
    - `triage` — summary-only: rule in/out from metadata + diff, fetch a body
      ONLY if that makes a violation plausible;
