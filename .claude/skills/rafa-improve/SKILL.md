@@ -77,6 +77,23 @@ compile` now WARNS on an empty one. It is deliberately not derived from the doma
 notes citing the same files — that would invent a facet you never wrote, which §0
 forbids. Name the domain(s) the fix actually touches, from `coverage.md`'s registry.
 
+**And READ the graph you are feeding.** `blast_radius` exists so this question can be
+asked back: *"where is the open debt, relative to what we actually understand?"*
+`query_knowledge` answers it; `search_knowledge` cannot, because it is a structural
+question about hubs and neighbourhoods, not a phrase.
+
+Call `query_schema` first and compose against what it returns — the live kinds, edges
+and this repo's real topic list. Do not paste a vocabulary from this file; a hardcoded
+enum drifts silently, and drift is what leverage-ranking cannot survive.
+
+The pass this unlocks: walk from a domain to the improvements in its blast radius and
+to the notes in it, and **rank by the gap between them**. A domain with a thin
+coverage status and open P0/P1 rows is not the same as a domain with the same rows and
+a mapped status — the first is debt nobody has even described yet, and that is the
+highest-leverage row on the ledger. Ranking by priority alone cannot see that
+difference, because priority is a property of one row and leverage is a property of
+the row's *neighbourhood*.
+
 ---
 
 ## Procedure (`/rafa improve`)
@@ -137,6 +154,12 @@ forbids. Name the domain(s) the fix actually touches, from `coverage.md`'s regis
 5. **Cite-check (the fidelity gate).** Run
    `npx @rafinery/cli verify-citations --root=.rafa/improve --dirs=improvements`. Every cite
    must resolve; **drop or fix any that don't** — a hallucinated improvement is the cardinal sin.
+6. **Leave the loop evidence.** Emit
+   `report_loop_event(category: "improve-pass", outcome: "swept", subject: <branch or scope>)`
+   at the end of the pass. Until 2026-07-31 this was the ONE producer lane that
+   left no loop event — sage could not tell "improve never runs" from "improve
+   runs and finds nothing," which are opposite health signals. Counts stay in the
+   ledger frontmatter; the event is the SHAPE (per contract loop-event rules).
 6. **Ledger + trend.** Regenerate `ledger.md`: counts by priority/category/status + a **debt
    score** (weighted open improvements) and its trend vs the last run — the compounding made
    visible. Write the machine-read **frontmatter** `open` · `debt_score` · `by_priority`

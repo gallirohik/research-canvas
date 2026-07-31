@@ -62,7 +62,6 @@ try {
   // surfaces carry to the OLD branch first — deterministic, nothing lost.
   const cur = shR("git rev-parse --abbrev-ref HEAD");
   if (cur !== branch) {
-    let carried = null;
     try {
       shR("git add -A");
       disposeHydrations(cur);
@@ -71,32 +70,10 @@ try {
       /* nothing dirty */
     }
     try {
-      carried = shR("git rev-parse HEAD");
-    } catch {
-      /* unborn branch — nothing to carry */
-    }
-    let existed = false;
-    try {
       shR(`git rev-parse --verify -q "refs/heads/${branch}"`);
       shR(`git checkout -q "${branch}"`);
-      existed = true;
     } catch {
-      // New branch: created from the current HEAD, so the tree already carries.
       shR(`git checkout -q -b "${branch}"`);
-    }
-    // The carryover above preserves the working brain on the OLD branch, but a
-    // plain checkout of an EXISTING target replaces the tree with whatever that
-    // branch holds — and a stale target (e.g. one still sitting on an empty genesis
-    // base) then makes the 1-1 mirror below commit an EMPTY brain. The content must
-    // travel WITH the switch, exactly as the checkout -b path above gets for free.
-    // read-tree sets index+worktree to the carried tree without moving HEAD, so the
-    // mirror commits the real brain onto `branch`.
-    if (existed && carried) {
-      try {
-        shR(`git read-tree -u --reset ${carried}`);
-      } catch {
-        /* best effort — the mirror below still records whatever is on disk */
-      }
     }
   }
 

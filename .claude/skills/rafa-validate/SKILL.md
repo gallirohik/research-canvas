@@ -29,6 +29,39 @@ agent. So:
 - The bar: `scan.md` § Acceptance criteria (A–D) + the quality rubric below.
 - You run in **fresh context** — you have NOT seen how the scan was produced. Keep it that way.
 
+## Triage by GRADE before you re-grep (the graph's one gift to a validator)
+
+Not every claim in a brain is the same kind of claim, and the graph already says so.
+Every edge carries a grade, and the order is **`verified > derived > authored`**:
+
+- **`verified`** — a `cites` edge. The build re-greps it; if the token moved, the gate
+  already failed. Re-checking these by hand is re-running a machine.
+- **`derived`** — a mechanical join (domain membership, merge history). Wrong only if
+  the derivation is wrong, never through judgement.
+- **`authored`** — a `links:` edge. **A human or model ASSERTED this**, and nothing
+  re-checks it. It is the only grade that can be quietly wrong.
+
+So spend your skepticism where it buys something. `query_schema` returns the live
+grades and edge types — introspect, then compose; do not paste the list above into a
+query, because a vocabulary that drifts silently is exactly what this brain is built
+to prevent. Then interrogate the `authored` edges: does the link actually hold, or did
+someone assert a relationship that the code does not support?
+
+This does not soften the creed. You still ground every finding in a `file:line`, you
+still run the checker yourself, and you still default to skepticism. It changes only
+WHERE the expensive scrutiny lands — a grade tells you which claims already have a
+machine behind them, and which have nothing but someone's word.
+
+Two structural checks worth running while you are here, both of which the deterministic
+checker cannot see:
+
+- **Dangling links** — an `authored` edge pointing at an id no longer in the brain.
+  Now a HARD compile failure, so a note pruned mid-scan while another still links to
+  it fails the NEXT scan, in the customer's repo, with no obvious cause.
+- **Graph-isolated improvements** — an improvement with an empty `blast_radius` has no
+  hub edge at all: it can never surface in a domain neighbourhood, so it is invisible
+  to exactly the query that should find it.
+
 ## Procedure (run in order; ground everything in code)
 
 0. **Prove the machinery first** — `npx -y @rafinery/cli doctor` (capture-engine P0). A

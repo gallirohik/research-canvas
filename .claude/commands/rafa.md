@@ -29,7 +29,7 @@ Admin verbs are expensive or side-effectful and run **only when explicitly typed
 | small work — radius ≤ 1 domain, no contract surface, fits one sitting | **DIRECT-DO**: recall → implement → verify → done. NO plan files, NO approval, NOTHING to remember — the sensors carry the loop (dirty-mark, reflex, checkpoint-at-push). Escalate only if it GROWS (below). |
 | "let's add / build / implement / refactor X" — real blast radius (≥ 2 domains, a contract surface, or multi-session) (no active plan) | `## plan` — weight by blast radius: lite vs full (see plan.md § plan-lite) |
 | same, with an active plan covering it | `## build` |
-| "why / how / where does X …" (a question) | recall-and-answer: MCP `search_knowledge` → cited answer. No choreography. |
+| "why / how / where does X …" (a question) | recall-and-answer, query-first: harvest the anchor already present (open file, diff, id) → MCP `query_knowledge`; `search_knowledge` only for pure free text → cited answer, graded (contract §9a). No choreography. |
 | exploration — "what if / should we / compare / thinking about X" | **BRAINSTORM mode** (§ below): grounded participant, zero workflow talk, one offer at crystallization. |
 | "list plans / what plans are there" | `list_plans` — NAMES ONLY (id · title · status · progress); never dump bodies |
 | "load / open / work on plan X" | `get_plan(X)` → materialize parent + children (bodies) into `.rafa/plans/<X>/` + set `active.md` → resume per `## build` |
@@ -216,6 +216,29 @@ Two destinations, one rule — route by what the observation is ABOUT:
   (*"want me to remember that?"*), then `put_dev_insight` — the dev's PRIVATE user brain,
   cross-repo. Never logged to repo activity, never narrated to anyone (consent floor:
   nothing person-scoped leaves it).
+
+## The driver — driven verbs run on the ladder (B6, 2026-07-31)
+
+`scan` · `plan` · `build` are DRIVEN: the CLI owns the SEQUENCE, you own the
+JUDGMENT. On dispatch, before any choreography:
+
+1. **`rafa run <verb>`** — opens the run (or resumes the open one; `plan`/`build`
+   resolve their params — build derives the ready task itself) and prints the
+   single next step.
+2. **Loop.** A `does` step the driver ALREADY RAN (pull · recall · hydrate ·
+   checkpoint — read its evidence, never re-run it by hand); an `asks` step is
+   YOUR task — execute it exactly per the verb's SOP (the SOP says HOW; the
+   driver says WHICH and WHEN), then `rafa run advance --note="<what you did>"`.
+3. **Never choreograph from memory.** Out-of-order advance is a refusal, not an
+   error to work around. Lost? `rafa run status`. A wrong turn rewinds:
+   `rafa run rewind --to=<step>`. Abandoning mid-run: `rafa run abandon` — never
+   silence.
+
+Why this exists: RECALL and CAPTURE were the two steps every long session
+skipped by forgetting, and a skipped recall is invisible (it looks identical to
+"the brain had nothing"). The ladder makes the loop's spine mechanical; the run
+record (`.rafa/runs/`) is the receipt that each step actually happened, with
+evidence, at a sha.
 
 ## Verb map — one line each; the procedure lives in the linked skill
 
