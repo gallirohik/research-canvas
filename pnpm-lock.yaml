@@ -57,6 +57,9 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.19)
     devDependencies:
+      '@rafinery/cli':
+        specifier: 0.18.3
+        version: 0.18.3
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.1
@@ -1093,6 +1096,23 @@ packages:
 
   '@radix-ui/rect@1.1.3':
     resolution: {integrity: sha512-JtyZR+mqgBibTo8xea3B6ZRmzZiM/YeVBtUkas6zMuXjAlfIFIW2FgqeM9eLyvEaYX66vr6DJMK+4U6LV0KhNw==}
+
+  '@rafinery/cli@0.18.3':
+    resolution: {integrity: sha512-WuMUnVAeaF4vZm4mb820xKBn2Rzfk2XouF0yIq1O6hPv+vu3m4maUOsQAllOg5Nrcrg0Y9Kk62FVucCt9thW5g==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  '@rafinery/knowledge@0.2.0':
+    resolution: {integrity: sha512-WdvmmV8k6X6tK0BChHwVLC9simj+WxLDasDbFuPy7FSFjjwjMGVGbwL+ZYdmyOGYf3OGixLyfo+P4QTqshU+3A==}
+    engines: {node: '>=18'}
+
+  '@rafinery/okf@0.1.2':
+    resolution: {integrity: sha512-x2zmfJ0f6THtT5s8wc1DfkobFa3BQhBVBNfuXeWf0EVn2qJoZ404FvqDyaGw1O9fMo1waLhuDJIciJ8ExoMf6A==}
+    engines: {node: '>=18'}
+
+  '@rafinery/retrieval@0.2.0':
+    resolution: {integrity: sha512-lL6/m1G+qlrsMrmZ4NP7M4+ReJbiwflbauYlznFbIu3zzEBKnzzDvQrlM+OEhHPpS4Z27Ixt0B4P+ocADtapgg==}
+    engines: {node: '>=18'}
 
   '@react-aria/focus@3.22.1':
     resolution: {integrity: sha512-CPxtkyrBi/HYY5P3lE/57sQ6qfa0lN8E55TOm89H0kNGv0lKt+/0zP7lWERzBjRr5IxBVrQX4gFEowBN52LPaA==}
@@ -4967,6 +4987,21 @@ snapshots:
       '@types/react-dom': 19.0.2(@types/react@19.0.1)
 
   '@radix-ui/rect@1.1.3': {}
+
+  '@rafinery/cli@0.18.3':
+    dependencies:
+      '@rafinery/knowledge': 0.2.0
+      '@rafinery/okf': 0.1.2
+      '@rafinery/retrieval': 0.2.0
+
+  '@rafinery/knowledge@0.2.0':
+    dependencies:
+      '@rafinery/okf': 0.1.2
+      '@rafinery/retrieval': 0.2.0
+
+  '@rafinery/okf@0.1.2': {}
+
+  '@rafinery/retrieval@0.2.0': {}
 
   '@react-aria/focus@3.22.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
