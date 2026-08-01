@@ -16,6 +16,11 @@ from src.lib.state import AgentState
 
 _RESOURCE_CACHE = {}
 
+# chat_node injects every resource's full text into the system prompt on each
+# turn, so an uncapped page can push a single request past the model's per-minute
+# token limit — and a request that large can never succeed, however long you wait.
+MAX_RESOURCE_CHARS = 8000
+
 
 def get_resource(url: str):
     """
@@ -74,7 +79,12 @@ async def _download_resource(url: str):
             ) as response:
                 response.raise_for_status()
                 html_content = await response.text()
-                markdown_content = html2text.html2text(html_content)
+                text = html2text.html2text(html_content)
+                markdown_content = (
+                    f"{text[:MAX_RESOURCE_CHARS]}\n\n[truncated]"
+                    if len(text) > MAX_RESOURCE_CHARS
+                    else text
+                )
                 _RESOURCE_CACHE[url] = markdown_content
                 return markdown_content
     except Exception as e:  # pylint: disable=broad-except
