@@ -52,10 +52,26 @@ function isPrivateIPv6(ip: string): boolean {
   return false;
 }
 
+// Deny-private alone still lets a caller redirect this proxy (and its
+// langsmithApiKey) at any public host on the internet. The server already
+// knows its one legitimate target (LGC_DEPLOYMENT_URL, also read below for
+// the no-param fallback), so require the hostname to match it exactly;
+// unset/unparseable means there is no known host to allow.
+const allowedDeploymentHost = (() => {
+  const configured = process.env.LGC_DEPLOYMENT_URL;
+  if (!configured) return null;
+  try {
+    return new URL(configured).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+})();
+
 // Rejects anything that could redirect this proxy (and its langsmithApiKey) at an
-// internal/private host instead of a real LangGraph Cloud deployment. Resolves DNS
-// (mirroring agents/python/src/lib/download.py's _is_safe_url) so a hostname that
-// merely *points* at a private address can't slip past a hostname-string check.
+// internal/private host, or at any host other than the configured deployment.
+// Resolves DNS (mirroring agents/python/src/lib/download.py's _is_safe_url) so a
+// hostname that merely *points* at a private address can't slip past a
+// hostname-string check.
 async function isSafeDeploymentUrl(value: string): Promise<boolean> {
   let parsed: URL;
   try {
@@ -67,6 +83,7 @@ async function isSafeDeploymentUrl(value: string): Promise<boolean> {
 
   const hostname = parsed.hostname.toLowerCase();
   if (hostname === "localhost" || hostname.endsWith(".local")) return false;
+  if (!allowedDeploymentHost || hostname !== allowedDeploymentHost) return false;
 
   let addresses: string[];
   try {
