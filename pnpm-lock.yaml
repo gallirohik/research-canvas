@@ -58,8 +58,8 @@ importers:
         version: 1.0.7(tailwindcss@3.4.19)
     devDependencies:
       '@rafinery/cli':
-        specifier: 0.18.4
-        version: 0.18.4
+        specifier: 0.18.5
+        version: 0.18.5
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.1
@@ -1097,8 +1097,8 @@ packages:
   '@radix-ui/rect@1.1.3':
     resolution: {integrity: sha512-JtyZR+mqgBibTo8xea3B6ZRmzZiM/YeVBtUkas6zMuXjAlfIFIW2FgqeM9eLyvEaYX66vr6DJMK+4U6LV0KhNw==}
 
-  '@rafinery/cli@0.18.4':
-    resolution: {integrity: sha512-2TqX0dFC9jQFxivp688Qe7QQi1ME14dVHSAZo+mfI89hpJUhqdLvZTjYVKpjoLx6Qn/K2/GW9gOBf3lrCgR6Nw==}
+  '@rafinery/cli@0.18.5':
+    resolution: {integrity: sha512-lAytHVYsEeShvCgjjaGepjtUZQ0m/jaafr81447hHZdAZcySNX6jlvlY1vcp+8NCfF/5MXQuI+wFUMWU/IHDWQ==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -4988,7 +4988,7 @@ snapshots:
 
   '@radix-ui/rect@1.1.3': {}
 
-  '@rafinery/cli@0.18.4':
+  '@rafinery/cli@0.18.5':
     dependencies:
       '@rafinery/knowledge': 0.2.0
       '@rafinery/okf': 0.1.2
