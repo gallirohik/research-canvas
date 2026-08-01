@@ -12,6 +12,11 @@ from src.lib.download import get_resource
 from src.lib.model import get_model
 from src.lib.state import AgentState
 
+# Total characters of resource text allowed in the system prompt (~6k tokens),
+# leaving room for the report, chat history and tool schemas within a modest
+# per-minute token budget.
+MAX_TOTAL_RESOURCE_CHARS = 24000
+
 
 @tool
 def Search(queries: List[str]):  # pylint: disable=invalid-name,unused-argument
@@ -67,10 +72,18 @@ async def chat_node(
 
     resources = []
 
+    # Per-resource truncation alone still scales with resource count, so budget the
+    # aggregate too — this block is re-sent in full on every turn.
+    remaining = MAX_TOTAL_RESOURCE_CHARS
+
     for resource in state["resources"]:
         content = get_resource(resource["url"])
         if content == "ERROR":
             continue
+        if remaining <= 0:
+            break
+        content = content[:remaining]
+        remaining -= len(content)
         resources.append({**resource, "content": content})
 
     model = get_model(state)
