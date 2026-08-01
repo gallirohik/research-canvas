@@ -21,7 +21,7 @@ function Home() {
   const { agent, lgcDeploymentUrl } = useModelSelectorContext();
 
   const runtimeUrl = lgcDeploymentUrl
-    ? `/api/copilotkit?lgcDeploymentUrl=${lgcDeploymentUrl}`
+    ? `/api/copilotkit?lgcDeploymentUrl=${encodeURIComponent(lgcDeploymentUrl)}`
     : `/api/copilotkit`;
 
   return (

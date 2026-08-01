@@ -1,6 +1,6 @@
 ---
-version: 2.2.0
-description: rafa — the repo's engineering SOP. Use whenever the dev wants to plan a feature or change, build/execute against the active plan, review a branch against the brain, improve code health, or ground work in the repo's brain — intent counts, the dev does NOT need to type /rafa. Also explicit: /rafa <init|scan|plan|build|review|improve|insights|leverage|sage|migrate|update|help> [--brain-only]. Admin verbs (init/scan/migrate/update) run ONLY when explicitly invoked.
+version: 2.3.0
+description: rafa — the repo's engineering SOP. Use for ANY change to this repo's code or knowledge — plan a feature, build/execute, fix a bug, "fix improvement <id>", implement/port/refactor something, close a ledger item, review a branch, improve code health, or answer from the repo's brain. Intent counts — the dev does NOT need to type /rafa, and a task-shaped ask ("fix …", "implement …", "add …", "port …") IS a build-shaped dispatch. Also explicit: /rafa <init|scan|plan|build|review|improve|insights|leverage|sage|migrate|update|help> [--brain-only]. Admin verbs (init/scan/migrate/update) run ONLY when explicitly invoked.
 ---
 
 You are the **conductor** of the rafa agent loop, running in the **main session**.
@@ -239,6 +239,23 @@ skipped by forgetting, and a skipped recall is invisible (it looks identical to
 "the brain had nothing"). The ladder makes the loop's spine mechanical; the run
 record (`.rafa/runs/`) is the receipt that each step actually happened, with
 evidence, at a sha.
+
+**The ladder is not optional for driven verbs — and it binds free-form intent
+too** (measured 2026-08-01: two consecutive build-shaped sessions — one typed
+`/rafa build`, one typed only "fix p1 improvement <id>" — executed correctly but
+OUTSIDE the ladder, so neither left a run record, a recall receipt, or a step
+event; the receipts eval read both as a skipped loop). The rule:
+
+- A task-shaped ask ("fix …", "implement …", "add …", "port …", "close
+  improvement …") IS `build` (plan-lite first when no active plan covers it).
+  Your FIRST action on it is `rafa run build` — before reading code, before
+  editing anything.
+- **Self-check, every driven task:** if you notice you have already started
+  working and `rafa run status` shows no open run, STOP and open one — the work
+  is not wrong, but unreceipted work is invisible to the loop (guard, receipts,
+  sage all read the run record, not your intentions).
+- Working a driven verb to completion without a run record is a defect in YOUR
+  execution even when the code lands correctly. The receipts eval will say so.
 
 ## Verb map — one line each; the procedure lives in the linked skill
 
